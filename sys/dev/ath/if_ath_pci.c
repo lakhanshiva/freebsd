@@ -466,6 +466,8 @@ static driver_t ath_pci_driver = {
 };
 static	devclass_t ath_devclass;
 DRIVER_MODULE(if_ath_pci, pci, ath_pci_driver, ath_devclass, 0, 0);
+MODULE_PNP_INFO("U16:vendor;U16:device;U16:#;U16:#", pci, if_ath_pci,
+    ath_pci_id_table, sizeof(ath_pci_id_table), nitems(ath_pci_id_table) - 1);
 MODULE_VERSION(if_ath_pci, 1);
 MODULE_DEPEND(if_ath_pci, wlan, 1, 1, 1);		/* 802.11 media layer */
 MODULE_DEPEND(if_ath_pci, ath_main, 1, 1, 1);	/* if_ath driver */
