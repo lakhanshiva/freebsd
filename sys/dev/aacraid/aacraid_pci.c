@@ -86,7 +86,7 @@ static driver_t aacraid_pci_driver = {
 static devclass_t	aacraid_devclass;
 
 DRIVER_MODULE(aacraid, pci, aacraid_pci_driver, aacraid_devclass, 0, 0);
-MODULE_PNP_INFO("U16:vendor;U16:device;U16:#;U16:#", pci, aacraid,
+MODULE_PNP_INFO("U16:vendor;U16:device", pci, aacraid,
     aacraid_family_identifiers, sizeof(aacraid_family_identifiers[0]),
     nitems(aacraid_family_identifiers) - 1);		
 MODULE_DEPEND(aacraid, pci, 1, 1, 1);
