@@ -493,7 +493,7 @@ static driver_t aacch_driver = {
 
 static devclass_t	aacch_devclass;
 DRIVER_MODULE(aacch, pci, aacch_driver, aacch_devclass, NULL, NULL);
-MODULE_PNP_INFO("U16:vendor;U16:device;U16:#;U16:#", pci, aacch,
+MODULE_PNP_INFO("U16:vendor;U16:device", pci, aacch,
     aac_identifiers, sizeof(aac_identifiers[0]), nitems(aac_identifiers) - 1);
 
 static int
