@@ -664,6 +664,8 @@ static driver_t ahci_driver = {
         sizeof(struct ahci_controller)
 };
 DRIVER_MODULE(ahci, pci, ahci_driver, ahci_devclass, NULL, NULL);
+MODULE_PNP_INFO("W32:vendor/device", pci, ahci, ahci_ids,
+    sizeof(ahci_ids[0]), nitems(ahci_ids) - 1);
 static device_method_t ahci_ata_methods[] = {
 	DEVMETHOD(device_probe,     ahci_ata_probe),
 	DEVMETHOD(device_attach,    ahci_pci_attach),
