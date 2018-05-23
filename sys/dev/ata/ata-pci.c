@@ -615,7 +615,7 @@ static driver_t ata_pci_driver = {
 
 DRIVER_MODULE(atapci, pci, ata_pci_driver, ata_pci_devclass, NULL, NULL);
 uint32_t fake = (PCIC_STORAGE << 16) | (PCIS_STORAGE_IDE << 8);
-MODULE_PNPINFO("U32class-M0x00ffff00;", pci, atapci, &fake, sizeof(fake), 1);
+MODULE_PNP_INFO("U32class-M0x00ffff00;", pci, atapci, &fake, sizeof(fake), 1);
 MODULE_VERSION(atapci, 1);
 MODULE_DEPEND(atapci, ata, 1, 1, 1);
 
