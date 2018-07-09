@@ -96,6 +96,8 @@ __FBSDID("$FreeBSD$");
 #include <dev/esp/am53c974reg.h>
 
 #define	PCI_DEVICE_ID_AMD53C974	0x20201022
+#define	PCI_DEVICEID_AMD53C974	0x2020
+#define PCI_VENDOR_ID_AMD 0x1022
 
 struct esp_pci_softc {
 	struct ncr53c9x_softc	sc_ncr53c9x;	/* glue to MI code */
@@ -141,12 +143,9 @@ static int	esp_pci_detach(device_t);
 static int	esp_pci_suspend(device_t);
 static int	esp_pci_resume(device_t);
 
-static struct esp_dev {
-	uint32_t deviceid;
-	const char *description;
-} esp_devs[] = {
-	{PCI_DEVICE_ID_AMD53C974, "AMD Am53C974 Fast-SCSI"},
-	{0, NULL},
+struct pci_device_table esp_devs[] = {
+	{PCI_DEV(PCI_VENDOR_ID_AMD, PCI_DEVICEID_AMD53C974),
+	 PCI_DESCR("AMD Am53C974 Fast-SCSI")}
 };
 
 static device_method_t esp_pci_methods[] = {
@@ -166,8 +165,7 @@ static driver_t esp_pci_driver = {
 };
 
 DRIVER_MODULE(esp, pci, esp_pci_driver, esp_devclass, 0, 0);
-MODULE_PNP_INFO("U32:device", pci, esp, esp_devs,
-    sizeof(esp_devs[0]), nitems(esp_devs) - 1);
+PCI_PNP_INFO(esp_devs);
 MODULE_DEPEND(esp, pci, 1, 1, 1);
 
 /*
@@ -202,20 +200,13 @@ static struct ncr53c9x_glue esp_pci_glue = {
 static int
 esp_pci_probe(device_t dev)
 {
-	const struct esp_dev *esd;
-	uint32_t did;
-	size_t i;
-	did = pci_get_devid(dev);
-	
-	for(i=0; i<nitems(esp_devs) - 1; i++) {
-		esd = &esp_devs[i];
-		if(did == esd->deviceid){
-			device_set_desc(dev, esd->description);
-			return BUS_PROBE_DEFAULT;
-		}
-	}
+	const struct pci_device_table *esd;
 
-	return (ENXIO);
+	esd = PCI_MATCH(dev, esp_devs);
+	if (esd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, esd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 /*
