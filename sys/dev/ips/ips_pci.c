@@ -40,34 +40,24 @@ __FBSDID("$FreeBSD$");
 static int ips_pci_free(ips_softc_t *sc);
 static void ips_intrhook(void *arg);
 
-static struct ips_pci_dev {
-	uint16_t vendorid;
-	uint16_t deviceid;
-	const char *description;
-} ips_pci_devs[] = {
-	{IPS_VENDOR_ID, IPS_MORPHEUS_DEVICE_ID, "IBM ServeRAID Adapter"},
-	{IPS_VENDOR_ID, IPS_COPPERHEAD_DEVICE_ID, "IBM ServeRAID Adapter"},
-	{IPS_VENDOR_ID_ADAPTEC, IPS_MARCO_DEVICE_ID, "Adaptec ServeRAID Adapter"},
-	{0,0,0},
+struct pci_device_table ips_pci_devs[] = {
+	{PCI_DEV(IPS_VENDOR_ID, IPS_MORPHEUS_DEVICE_ID),
+	 PCI_DESCR("IBM ServeRAID Adapter")},
+	{PCI_DEV(IPS_VENDOR_ID, IPS_COPPERHEAD_DEVICE_ID),
+	 PCI_DESCR("IBM ServeRAID Adapter")},
+	{PCI_DEV(IPS_VENDOR_ID_ADAPTEC, IPS_MARCO_DEVICE_ID),
+	 PCI_DESCR("Adaptec ServeRAID Adapter")}
 };
 
 static int ips_pci_probe(device_t dev)
 {
-        const struct ips_pci_dev *ipsd;
-	u_int16_t vid;
-	u_int16_t did;
-	size_t i;
-
-	vid = pci_get_vendor(dev);
-	did = pci_get_device(dev);
-	for (i = 0; i < nitems(ips_pci_devs) - 1; i++) {
-		ipsd = &ips_pci_devs[i];
-		if ((vid == ipsd->vendorid) && (did == ipsd->deviceid)) {
-			device_set_desc(dev, ipsd->description);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-	return (ENXIO);
+        const struct pci_device_table *ipsd;
+	
+	ipsd = PCI_MATCH(dev, ips_pci_devs);
+	if (ipsd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ipsd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int ips_pci_attach(device_t dev)
@@ -232,5 +222,4 @@ static driver_t ips_pci_driver = {
 
 static devclass_t ips_devclass;
 DRIVER_MODULE(ips, pci, ips_pci_driver, ips_devclass, 0, 0);
-MODULE_PNP_INFO("U16:vendor;U16:device;D:#", pci, ips, ips_pci_devs,
-    sizeof(ips_pci_devs[0]), nitems(ips_pci_devs) - 1);
+PCI_PNP_INFO(ips_pci_devs);
