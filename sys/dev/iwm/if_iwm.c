@@ -5711,22 +5711,45 @@ static const struct iwm_devices {
 	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_2, &iwm8260_cfg },
 	{PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8265_1, &iwm8265_cfg },
 	{0, 0, NULL},
+ };
+
+struct pci_device_table iwm_devs[] = {
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_1),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 3165")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3160_2),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 3165")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_1),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 3165")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3165_2),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 3165")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_3168_1),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 3168")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_1),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 7260")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7260_2),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 7260")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_1),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 7265")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_7265_2),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 7265")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_1),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 8260")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8260_2),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 8260")},
+	{PCI_DEV(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_8265_1),
+	 PCI_DESCR("Intel(R) Dual Band Wireless AC 8265")},
 };
 
 static int
 iwm_probe(device_t dev)
 {
-	int i;
+	const struct pci_device_table *iwmd;
 
-	for (i = 0; i < nitems(iwm_devices); i++) {
-		if (pci_get_vendor(dev) == PCI_VENDOR_INTEL &&
-		    pci_get_device(dev) == iwm_devices[i].device) {
-			device_set_desc(dev, iwm_devices[i].cfg->name);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-
-	return (ENXIO);
+	iwmd = PCI_MATCH(dev, iwm_devs);
+	if (iwmd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, iwmd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -6462,8 +6485,7 @@ static driver_t iwm_pci_driver = {
 static devclass_t iwm_devclass;
 
 DRIVER_MODULE(iwm, pci, iwm_pci_driver, iwm_devclass, NULL, NULL);
-MODULE_PNP_INFO("U16:vendor;U16:device", pci, iwm, iwm_devices,
-    sizeof(iwm_devices[0]), nitems(iwm_devices) - 1);
+PCI_PNP_INFO(iwm_devices);
 MODULE_DEPEND(iwm, firmware, 1, 1, 1);
 MODULE_DEPEND(iwm, pci, 1, 1, 1);
 MODULE_DEPEND(iwm, wlan, 1, 1, 1);
