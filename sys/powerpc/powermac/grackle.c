@@ -61,6 +61,9 @@ __FBSDID("$FreeBSD$");
 
 #include "pcib_if.h"
 
+#define PCI_VENDOR_ID_MOTOROLA 0x1057
+#define PCI_DEVICE_ID_MPC106 0x0002
+
 /*
  * Device interface.
  */
@@ -83,12 +86,9 @@ static int		grackle_enable_config(struct grackle_softc *, u_int,
 static void		grackle_disable_config(struct grackle_softc *);
 static int		badaddr(void *, size_t);
 
-static struct grackle_hb_dev {
-	uint32_t deviceid;
-	const char *description;
-} grackle_hb_devs[] = {
-	{0x00021057, "Grackle Host to PCI bridge"},
-	{0, NULL},
+struct pci_device_table grackle_hb_devs[] = {
+	{PCI_DEV(PCI_VENDOR_ID_MOTOROLA, PCI_DEVICE_ID_MPC106),
+	 PCI_DESCR("MPC106 (Grackle) Host-PCI bridge")}
 };
 
 /*
@@ -115,17 +115,20 @@ static int
 grackle_probe(device_t dev)
 {
 	const char	*type, *compatible;
+	const struct pci_device_table grcd;
 
 	type = ofw_bus_get_type(dev);
 	compatible = ofw_bus_get_compat(dev);
+	grcd = PCI_MATCH(dev, grackle_hb_devs);
 
 	if (type == NULL || compatible == NULL)
 		return (ENXIO);
 
 	if (strcmp(type, "pci") != 0 || strcmp(compatible, "grackle") != 0)
 		return (ENXIO);
-
-	device_set_desc(dev, "MPC106 (Grackle) Host-PCI bridge");
+	if (grcd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, grcd->descr);
 	return (0);
 }
 
@@ -338,5 +341,4 @@ static driver_t grackle_hb_driver = {
 static devclass_t grackle_hb_devclass;
 
 DRIVER_MODULE(grackle_hb, pci, grackle_hb_driver, grackle_hb_devclass, 0, 0);
-MODULE_PNP_INFO("U32:device", pci, grackle_hb, grackle_hb_devs,
-    sizeof(grackle_hb_devs[0]), nitems(grackle_hb_devs) - 1);
+PCI_PNP_INFO(grackle_hb_devs);
