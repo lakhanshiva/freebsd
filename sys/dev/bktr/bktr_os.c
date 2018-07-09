@@ -211,23 +211,17 @@ static int	bktr_detach( device_t dev );
 static int	bktr_shutdown( device_t dev );
 static void	bktr_intr(void *arg) { common_bktr_intr(arg); }
 
-static struct bktr_dev {
-	uint16_t vendorid;
-	uint16_t deviceid;
-	uint8_t rev;
-	const char *description;
-} bktr_devs[] = {
-	{PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848, 0x12,
-	    "BrookTree 848A"},
-	{PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848, 0,
-	    "BrookTree 848"},
-	{PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT849, 0,
-	    "BrookTree 849A"},
-	{PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878, 0,
-	    "BrookTree 878"},
-	{PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879, 0,
-	    "BrookTree 879"},
-	{0, 0, 0, NULL},
+struct pci_device_table bktr_devs[] = {
+	{PCI_DEV(PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848), PCI_REVID(0x12),
+	 PCI_DESCR("BrookTree 848A")},
+	{PCI_DEV(PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848),
+	 PCI_DESCR("BrookTree 848")},
+	{PCI_DEV(PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT849),
+	 PCI_DESCR("BrookTree 849A")},
+	{PCI_DEV(PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878),
+	 PCI_DESCR("BrookTree 878")},
+	{PCI_DEV(PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879),
+	 PCI_DESCR("BrookTree 879")}
 };
 
 static device_method_t bktr_methods[] = {
@@ -293,8 +287,7 @@ MODULE_DEPEND(bktr, iicbus, IICBUS_MINVER, IICBUS_MODVER, IICBUS_MAXVER);
 MODULE_DEPEND(bktr, smbus, SMBUS_MINVER, SMBUS_MODVER, SMBUS_MAXVER);
 #endif
 DRIVER_MODULE(bktr, pci, bktr_driver, bktr_devclass, 0, 0);
-MODULE_PNP_INFO("U16:vendor;U16:device", pci, bktr, bktr_devs,
-    sizeof(bktr_devs[0]), nitems(bktr_devs) - 1);
+PCI_PNP_INFO(bktr_devs);
 MODULE_DEPEND(bktr, bktr_mem, 1,1,1);
 MODULE_VERSION(bktr, 1);
 
@@ -305,38 +298,13 @@ MODULE_VERSION(bktr, 1);
 static int
 bktr_probe( device_t dev )
 {
-	unsigned int type = pci_get_devid(dev);
-        unsigned int rev  = pci_get_revid(dev);
-	const struct bktr_dev *bktd;
-	uint16_t vid;
-	uint16_t did;
-	size_t i;
-	
-	vid = PCI_VENDOR(type);
-	did = PCI_PRODUCT(type);
+	const struct pci_device_table *bktd;
 
-	// XXX merge conflicts. Need to convert to PCI_MATCH instead.
-	if (BKTR_PCI_VENDOR(type) == PCI_VENDOR_BROOKTREE)
-	{
-		switch (BKTR_PCI_PRODUCT(type)) {
-		case PCI_PRODUCT_BROOKTREE_BT848:
-			if (rev == 0x12)
-				device_set_desc(dev, "BrookTree 848A");
-			else
-				device_set_desc(dev, "BrookTree 848");
-			return BUS_PROBE_DEFAULT;
-		case PCI_PRODUCT_BROOKTREE_BT849:
-			device_set_desc(dev, "BrookTree 849A");
-			return BUS_PROBE_DEFAULT;
-		case PCI_PRODUCT_BROOKTREE_BT878:
-			device_set_desc(dev, "BrookTree 878");
-			return BUS_PROBE_DEFAULT;
-		case PCI_PRODUCT_BROOKTREE_BT879:
-			device_set_desc(dev, "BrookTree 879");
-			return BUS_PROBE_DEFAULT;
-		}
-	}
-        return ENXIO;
+	bktd = PCI_MATCH(dev, bktr_devs);
+	if (bktd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, bktd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 
