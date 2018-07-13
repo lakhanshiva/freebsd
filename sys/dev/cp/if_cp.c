@@ -207,11 +207,11 @@ static struct mbuf *makembuf (void *buf, unsigned len)
 static int cp_probe (device_t dev)
 {
         const struct pci_device_table *cpd;
-	
+
 	cpd = PCI_MATCH(dev, cp_devs);
 	if (cpd == NULL)
 		return ENXIO;
-	device_set_desc(dev, cpd->description);
+	device_set_desc(dev, cpd->descr);
 	return BUS_PROBE_DEFAULT;
 }
 
