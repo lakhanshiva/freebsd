@@ -322,9 +322,9 @@ static int ce_probe (device_t dev)
 
 	ced = PCI_MATCH(dev, ce_devs);
 	if (ced == NULL)
-		return ENXIO;
-	device_set_desc(dev, ced->description);
-	return BUS_PROBE_DEFAULT;
+		return (ENXIO);
+	device_set_desc(dev, ced->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static void ce_timeout (void *arg)
@@ -2636,11 +2636,9 @@ MODULE_DEPEND (ce, sppp, 1, 1, 1);
 #endif
 #ifdef KLD_MODULE
 DRIVER_MODULE (cemod, pci, ce_driver, ce_devclass, ce_modevent, NULL);
-MODULE_PNP_INFO("U16:vendor; U16:device;D:#", pci, cemod, ce_devs,
-     sizeof(ce_devs[0]), nitems(ce_devs));
+PCI_PNP_INFO(ce_devs);
 #else
 DRIVER_MODULE (ce, pci, ce_driver, ce_devclass, ce_modevent, NULL);
-MODULE_PNP_INFO("U16:vendor; U16:device;D:#", pci, ce, ce_devs,
-     sizeof(ce_devs[0]), nitems(ce_devs));
+PCI_PNP_INFO(ce_devs);
 #endif
 #endif /* NPCI */
