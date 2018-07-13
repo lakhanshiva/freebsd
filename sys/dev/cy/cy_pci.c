@@ -70,13 +70,11 @@ __FBSDID("$FreeBSD$");
 static int	cy_pci_attach(device_t dev);
 static int	cy_pci_probe(device_t dev);
 
-static struct cy_dev {
-	uint32_t deviceid;
-	const char *description;
-} cy_devs[] = {
-	{0x0100120e, "Cyclades Cyclom-Y Serial Adapter"},
-	{0x0101120e, "Cyclades Cyclom-Y Serial Adapter"},
-	{ 0, NULL },
+struct pci_device_table cy_devs[] = {
+	{PCI_DEV(0x120e, 0x0100),
+	 PCI_DESCR("Cyclades Cyclom-Y Serial Adapter")},
+	{PCI_DEV(0x120e, 0x0101),
+	 PCI_DESCR("Cyclades Cyclom-Y Serial Adapter")}
 };
 
 static device_method_t cy_pci_methods[] = {
@@ -94,21 +92,24 @@ static driver_t cy_pci_driver = {
 };
 
 DRIVER_MODULE(cy, pci, cy_pci_driver, cy_devclass, 0, 0);
-MODULE_PNP_INFO("U32:device", pci, cy, cy_devs,
-    sizeof(cy_devs[0]), nitems(cy_devs) - 1);
+PCI_PNP_INFO(cy_devs);
 MODULE_DEPEND(cy, pci, 1, 1, 1);
 
 static int
 cy_pci_probe(dev)
 	device_t dev;
 {
+	const struct pci_device_table *cyd;
 	u_int32_t device_id;
 
 	device_id = pci_get_devid(dev);
 	device_id &= ~0x00060000;
 	if (device_id != 0x0100120e && device_id != 0x0101120e)
 		return (ENXIO);
-	device_set_desc(dev, "Cyclades Cyclom-Y Serial Adapter");
+	cyd = PCI_MATCH(dev, cy_devs);
+	if (cyd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, cyd->descr);
 	return (BUS_PROBE_DEFAULT);
 }
 
