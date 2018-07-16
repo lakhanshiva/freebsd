@@ -51,42 +51,23 @@ __FBSDID("$FreeBSD$");
 static int ipmi_pci_probe(device_t dev);
 static int ipmi_pci_attach(device_t dev);
 
-static struct ipmi_ident
-{
-	u_int16_t	vendor;
-	u_int16_t	device;
-	char		*desc;
-} ipmi_identifiers[] = {
-	{0x1028, 0x000d, "Dell PE2650 SMIC interface"},
-	{0, 0, 0}
+struct pci_device_table ipmi_identifiers[] = {
+	{PCI_DEV(0x1028, 0x000d),
+	 PCI_DESCR("Dell PE2650 SMIC interface")}
 };
-
-const char *
-ipmi_pci_match(uint16_t vendor, uint16_t device)
-{
-	struct ipmi_ident *m;
-
-	for (m = ipmi_identifiers; m->vendor != 0; m++)
-		if (m->vendor == vendor && m->device == device)
-			return (m->desc);
-	return (NULL);
-}
 
 static int
 ipmi_pci_probe(device_t dev)
 {
-	const char *desc;
+	const struct pci_device_table *ipmd;
 
 	if (ipmi_attached)
 		return (ENXIO);
-
-	desc = ipmi_pci_match(pci_get_vendor(dev), pci_get_device(dev));
-	if (desc != NULL) {
-		device_set_desc(dev, desc);
-		return (BUS_PROBE_DEFAULT);
-	}
-
-	return (ENXIO);
+	ipmd = PCI_MATCH(dev, ipmi_identifiers);
+	if (ipmd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ipmd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -179,20 +160,24 @@ static driver_t ipmi_pci_driver = {
 };
 
 DRIVER_MODULE(ipmi_pci, pci, ipmi_pci_driver, ipmi_devclass, 0, 0);
+PCI_PNP_INFO(ipmi_identifiers);
 
 /* Native IPMI on PCI driver. */
+struct pci_device_table ipmi2_devs[] = {
+	{PCI_CLASS(PCIC_SERIALBUS), PCI_SUBCLASS(PCIS_SERIALBUS_IPMI),
+	 PCI_DESCR("IPMI System Interface")}
+};
 
 static int
 ipmi2_pci_probe(device_t dev)
 {
+	const struct pci_device_table *ipmi2d;
 
-	if (pci_get_class(dev) == PCIC_SERIALBUS &&
-	    pci_get_subclass(dev) == PCIS_SERIALBUS_IPMI) {
-		device_set_desc(dev, "IPMI System Interface");
-		return (BUS_PROBE_GENERIC);
-	}
-
-	return (ENXIO);
+	ipmi2d = PCI_MATCH(dev, ipmi2_devs);
+	if (ipmi2d == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ipmi2d->descr);
+	return (BUS_PROBE_GENERIC);
 }
 
 static int
@@ -292,3 +277,4 @@ static driver_t ipmi2_pci_driver = {
 };
 
 DRIVER_MODULE(ipmi2_pci, pci, ipmi2_pci_driver, ipmi_devclass, 0, 0);
+PCI_PNP_INFO(ipmi2_devs);
