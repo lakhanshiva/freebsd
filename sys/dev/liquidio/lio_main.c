@@ -145,28 +145,36 @@ struct lio_vendor_info {
 	uint8_t		index;
 };
 
-static struct lio_vendor_info lio_pci_tbl[] = {
+struct pci_device_table lio_pci_tbl[] = {
 	/* CN2350 10G */
-	{PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID, LIO_CN2350_10G_SUBDEVICE,
-		0x02, 0},
+	{PCI_DEV(PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID),
+	 .match_flag_subdevice = 1, .subdevice = (LIO_CN2350_10G_SUBDEVICE),
+	 PCI_REVID(0x02), .driver_data (0),
+	 PCI_DESCR("LiquidIO 2350 10GbE Server Adapter")},
 
 	/* CN2350 10G */
-	{PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID, LIO_CN2350_10G_SUBDEVICE1,
-		0x02, 0},
+	{PCI_DEV(PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID),
+	 .match_flag_subdevice = 1, .subdevice = (LIO_CN2350_10G_SUBDEVICE1),
+	 PCI_REVID(0x02), .driver_data (0),
+	 PCI_DESCR("LiquidIO 2350 10GbE Server Adapter")},
 
 	/* CN2360 10G */
-	{PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID, LIO_CN2360_10G_SUBDEVICE,
-		0x02, 1},
+	{PCI_DEV(PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID),
+	 .match_flag_subdevice = 1, .subdevice = (LIO_CN2360_10G_SUBDEVICE),
+	 PCI_REVID(0x02), .driver_data (1),
+	 PCI_DESCR("LiquidIO 2360 10GbE Server Adapter")},
 
 	/* CN2350 25G */
-	{PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID, LIO_CN2350_25G_SUBDEVICE,
-		0x02, 2},
+	{PCI_DEV(PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID),
+	 .match_flag_subdevice = 1, .subdevice = (LIO_CN2350_25G_SUBDEVICE),
+	 PCI_REVID(0x02), .driver_data (2),
+	 PCI_DESCR("LiquidIO 2350 25GbE Server Adapter")},
 
 	/* CN2360 25G */
-	{PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID, LIO_CN2360_25G_SUBDEVICE,
-		0x02, 3},
-
-	{0, 0, 0, 0, 0}
+	{PCI_DEV(PCI_VENDOR_ID_CAVIUM, LIO_CN23XX_PF_VID),
+	 .match_flag_subdevice = 1, .subdevice = (LIO_CN2360_25G_SUBDEVICE),
+	 PCI_REVID(0x02), .driver_data (3),
+	 PCI_DESCR("LiquidIO 2360 25GbE Server Adapter")}
 };
 
 static char *lio_strings[] = {
@@ -195,38 +203,16 @@ struct lio_rx_ctl_context {
 static int
 lio_probe(device_t dev)
 {
-	struct lio_vendor_info	*tbl;
-
-	uint16_t	vendor_id;
-	uint16_t	device_id;
-	uint16_t	subdevice_id;
-	uint8_t		revision_id;
+	const struct pci_device_table *liod;
 	char		device_ver[256];
 
-	vendor_id = pci_get_vendor(dev);
-	if (vendor_id != PCI_VENDOR_ID_CAVIUM)
+	liod = PCI_MATCH(dev, lio_pci_tbl);
+	if (liod == NULL)
 		return (ENXIO);
-
-	device_id = pci_get_device(dev);
-	subdevice_id = pci_get_subdevice(dev);
-	revision_id = pci_get_revid(dev);
-
-	tbl = lio_pci_tbl;
-	while (tbl->vendor_id) {
-		if ((vendor_id == tbl->vendor_id) &&
-		    (device_id == tbl->device_id) &&
-		    (subdevice_id == tbl->subdevice_id) &&
-		    (revision_id == tbl->revision_id)) {
-			sprintf(device_ver, "%s, Version - %s",
-				lio_strings[tbl->index], LIO_VERSION);
-			device_set_desc_copy(dev, device_ver);
-			return (BUS_PROBE_DEFAULT);
-		}
-
-		tbl++;
-	}
-
-	return (ENXIO);
+	sprintf(device_ver, "%s, Version - %s",
+		lio_strings[liod->driver_data], LIO_VERSION);
+	device_set_desc_copy(dev, device_ver);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -414,6 +400,7 @@ static driver_t lio_driver = {
 
 devclass_t lio_devclass;
 DRIVER_MODULE(lio, pci, lio_driver, lio_devclass, lio_event, 0);
+PCI_PNP_INFO(lio_pci_tbl);
 
 MODULE_DEPEND(lio, pci, 1, 1, 1);
 MODULE_DEPEND(lio, ether, 1, 1, 1);
