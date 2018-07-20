@@ -122,6 +122,13 @@ static device_detach_t le_pci_detach;
 static device_resume_t le_pci_resume;
 static device_suspend_t le_pci_suspend;
 
+struct pci_device_table le_devs[] = {
+	{PCI_DEV(AMD_VENDOR, AMD_PCNET_PCI),
+	 PCI_DESCR("AMD PCnet-PCI")},
+	{PCI_DEV(AMD_VENDOR, AMD_PCNET_HOME),
+	 PCI_DESCR("AMD PCnet-Home")}
+};
+
 static device_method_t le_pci_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		le_pci_probe),
@@ -137,6 +144,7 @@ static device_method_t le_pci_methods[] = {
 
 DEFINE_CLASS_0(le, le_pci_driver, le_pci_methods, sizeof(struct le_pci_softc));
 DRIVER_MODULE(le, pci, le_pci_driver, le_devclass, 0, 0);
+PCI_PNP_INFO(le_devs);
 MODULE_DEPEND(le, ether, 1, 1, 1);
 
 static const int le_home_supmedia[] = {
@@ -276,22 +284,13 @@ le_pci_dma_callback(void *xsc, bus_dma_segment_t *segs, int nsegs, int error)
 static int
 le_pci_probe(device_t dev)
 {
+	const struct pci_device_table *led;
 
-	if (pci_get_vendor(dev) != AMD_VENDOR)
+	led = PCI_MATCH(dev, le_devs);
+	if (led == NULL)
 		return (ENXIO);
-
-	switch (pci_get_device(dev)) {
-	case AMD_PCNET_PCI:
-		device_set_desc(dev, "AMD PCnet-PCI");
-		/* Let pcn(4) win. */
-		return (BUS_PROBE_LOW_PRIORITY);
-	case AMD_PCNET_HOME:
-		device_set_desc(dev, "AMD PCnet-Home");
-		/* Let pcn(4) win. */
-		return (BUS_PROBE_LOW_PRIORITY);
-	default:
-		return (ENXIO);
-	}
+	device_set_desc(dev, led->descr);
+	return (BUS_PROBE_LOW_PRIORITY);
 }
 
 static int
