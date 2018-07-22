@@ -147,10 +147,6 @@ static driver_t mly_pci_driver = {
 	sizeof(struct mly_softc)
 };
 
-static devclass_t	mly_devclass;
-DRIVER_MODULE(mly, pci, mly_pci_driver, mly_devclass, 0, 0);
-MODULE_DEPEND(mly, pci, 1, 1, 1);
-MODULE_DEPEND(mly, cam, 1, 1, 1);
 
 static struct cdevsw mly_cdevsw = {
 	.d_version =	D_VERSION,
@@ -182,6 +178,15 @@ static struct mly_ident
     {0x1069, 0x0050, 0x1069, 0x0054, MLY_HWIF_I960RX,    "Mylex AcceleRAID 160"},
     {0, 0, 0, 0, 0, 0}
 };
+
+
+static devclass_t	mly_devclass;
+DRIVER_MODULE(mly, pci, mly_pci_driver, mly_devclass, 0, 0);
+MODULE_PNP_INFO("U16:vendor;U16:device;U16:subvendor;U16:subdevice", pci, mly,
+    mly_identifiers, sizeof(mly_identifiers[0]), nitems(mly_identifiers) - 1);
+MODULE_DEPEND(mly, pci, 1, 1, 1);
+MODULE_DEPEND(mly, cam, 1, 1, 1);
+
 
 /********************************************************************************
  * Compare the provided PCI device with the list we support.
