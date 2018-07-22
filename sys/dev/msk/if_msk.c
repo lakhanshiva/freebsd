@@ -165,79 +165,75 @@ TUNABLE_INT("hw.msk.jumbo_disable", &jumbo_disable);
 /*
  * Devices supported by this driver.
  */
-static const struct msk_product {
-	uint16_t	msk_vendorid;
-	uint16_t	msk_deviceid;
-	const char	*msk_name;
-} msk_products[] = {
-	{ VENDORID_SK, DEVICEID_SK_YUKON2,
-	    "SK-9Sxx Gigabit Ethernet" },
-	{ VENDORID_SK, DEVICEID_SK_YUKON2_EXPR,
-	    "SK-9Exx Gigabit Ethernet"},
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8021CU,
-	    "Marvell Yukon 88E8021CU Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8021X,
-	    "Marvell Yukon 88E8021 SX/LX Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8022CU,
-	    "Marvell Yukon 88E8022CU Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8022X,
-	    "Marvell Yukon 88E8022 SX/LX Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8061CU,
-	    "Marvell Yukon 88E8061CU Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8061X,
-	    "Marvell Yukon 88E8061 SX/LX Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8062CU,
-	    "Marvell Yukon 88E8062CU Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8062X,
-	    "Marvell Yukon 88E8062 SX/LX Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8035,
-	    "Marvell Yukon 88E8035 Fast Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8036,
-	    "Marvell Yukon 88E8036 Fast Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8038,
-	    "Marvell Yukon 88E8038 Fast Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8039,
-	    "Marvell Yukon 88E8039 Fast Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8040,
-	    "Marvell Yukon 88E8040 Fast Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8040T,
-	    "Marvell Yukon 88E8040T Fast Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8042,
-	    "Marvell Yukon 88E8042 Fast Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_8048,
-	    "Marvell Yukon 88E8048 Fast Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4361,
-	    "Marvell Yukon 88E8050 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4360,
-	    "Marvell Yukon 88E8052 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4362,
-	    "Marvell Yukon 88E8053 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4363,
-	    "Marvell Yukon 88E8055 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4364,
-	    "Marvell Yukon 88E8056 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4365,
-	    "Marvell Yukon 88E8070 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_436A,
-	    "Marvell Yukon 88E8058 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_436B,
-	    "Marvell Yukon 88E8071 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_436C,
-	    "Marvell Yukon 88E8072 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_436D,
-	    "Marvell Yukon 88E8055 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4370,
-	    "Marvell Yukon 88E8075 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4380,
-	    "Marvell Yukon 88E8057 Gigabit Ethernet" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_4381,
-	    "Marvell Yukon 88E8059 Gigabit Ethernet" },
-	{ VENDORID_DLINK, DEVICEID_DLINK_DGE550SX,
-	    "D-Link 550SX Gigabit Ethernet" },
-	{ VENDORID_DLINK, DEVICEID_DLINK_DGE560SX,
-	    "D-Link 560SX Gigabit Ethernet" },
-	{ VENDORID_DLINK, DEVICEID_DLINK_DGE560T,
-	    "D-Link 560T Gigabit Ethernet" }
+struct pci_device_table msk_devs[] = {
+	{PCI_DEV(VENDORID_SK, DEVICEID_SK_YUKON2),
+	 PCI_DESCR("SK-9Sxx Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_SK, DEVICEID_SK_YUKON2_EXPR),
+	 PCI_DESCR("SK-9Exx Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8021CU),
+	 PCI_DESCR("Marvell Yukon 88E8021CU Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8021X),
+	 PCI_DESCR("Marvell Yukon 88E8021 SX/LX Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8022CU),
+	 PCI_DESCR("Marvell Yukon 88E8022CU Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8022X),
+	 PCI_DESCR("Marvell Yukon 88E8022 SX/LX Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8061CU),
+	 PCI_DESCR("Marvell Yukon 88E8061CU Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8061X),
+	 PCI_DESCR("Marvell Yukon 88E8061 SX/LX Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8062CU),
+	 PCI_DESCR("Marvell Yukon 88E8062CU Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8062X),
+	 PCI_DESCR("Marvell Yukon 88E8062 SX/LX Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8035),
+	 PCI_DESCR("Marvell Yukon 88E8035 Fast Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8036),
+	 PCI_DESCR("Marvell Yukon 88E8036 Fast Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8038),
+	 PCI_DESCR("Marvell Yukon 88E8038 Fast Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8039),
+	 PCI_DESCR("Marvell Yukon 88E8039 Fast Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8040),
+	 PCI_DESCR("Marvell Yukon 88E8040 Fast Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8040T),
+	 PCI_DESCR("Marvell Yukon 88E8040T Fast Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8042),
+	 PCI_DESCR("Marvell Yukon 88E8042 Fast Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_8048),
+	 PCI_DESCR("Marvell Yukon 88E8048 Fast Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4361),
+	 PCI_DESCR("Marvell Yukon 88E8050 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4360),
+	 PCI_DESCR("Marvell Yukon 88E8052 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4362),
+	 PCI_DESCR("Marvell Yukon 88E8053 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4363),
+	 PCI_DESCR("Marvell Yukon 88E8055 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4364),
+	 PCI_DESCR("Marvell Yukon 88E8056 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4365),
+	 PCI_DESCR("Marvell Yukon 88E8070 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_436A),
+	 PCI_DESCR("Marvell Yukon 88E8058 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_436B),
+	 PCI_DESCR("Marvell Yukon 88E8071 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_436C),
+	 PCI_DESCR("Marvell Yukon 88E8072 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_436D),
+	 PCI_DESCR("Marvell Yukon 88E8055 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4370),
+	 PCI_DESCR("Marvell Yukon 88E8075 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4380),
+	 PCI_DESCR("Marvell Yukon 88E8057 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_4381),
+	 PCI_DESCR("Marvell Yukon 88E8059 Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_DLINK, DEVICEID_DLINK_DGE550SX),
+	 PCI_DESCR("D-Link 550SX Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_DLINK, DEVICEID_DLINK_DGE560SX),
+	 PCI_DESCR("D-Link 560SX Gigabit Ethernet")},
+	{PCI_DEV(VENDORID_DLINK, DEVICEID_DLINK_DGE560T),
+	 PCI_DESCR("D-Link 560T Gigabit Ethernet")}
 };
 
 static const char *model_name[] = {
@@ -375,6 +371,7 @@ static driver_t msk_driver = {
 static devclass_t msk_devclass;
 
 DRIVER_MODULE(mskc, pci, mskc_driver, mskc_devclass, NULL, NULL);
+PCI_PNP_INFO(msk_devs);
 DRIVER_MODULE(msk, mskc, msk_driver, msk_devclass, NULL, NULL);
 DRIVER_MODULE(miibus, msk, miibus_driver, miibus_devclass, NULL, NULL);
 
@@ -1182,21 +1179,13 @@ msk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 static int
 mskc_probe(device_t dev)
 {
-	const struct msk_product *mp;
-	uint16_t vendor, devid;
-	int i;
+	const struct pci_device_table *mskd;
 
-	vendor = pci_get_vendor(dev);
-	devid = pci_get_device(dev);
-	mp = msk_products;
-	for (i = 0; i < nitems(msk_products); i++, mp++) {
-		if (vendor == mp->msk_vendorid && devid == mp->msk_deviceid) {
-			device_set_desc(dev, mp->msk_name);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-
-	return (ENXIO);
+	mskd = PCI_MATCH(dev, msk_devs);
+	if (mskd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, mskd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
