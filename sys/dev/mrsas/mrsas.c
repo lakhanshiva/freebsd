@@ -66,7 +66,6 @@ static d_poll_t mrsas_poll;
 
 static void mrsas_ich_startup(void *arg);
 static struct mrsas_mgmt_info mrsas_mgmt_info;
-static struct mrsas_ident *mrsas_find_ident(device_t);
 static int mrsas_setup_msix(struct mrsas_softc *sc);
 static int mrsas_allocate_msix(struct mrsas_softc *sc);
 static void mrsas_shutdown_ctlr(struct mrsas_softc *sc, u_int32_t opcode);
@@ -174,23 +173,21 @@ SYSCTL_NODE(_hw, OID_AUTO, mrsas, CTLFLAG_RD, 0, "MRSAS Driver Parameters");
  * PCI device struct and table
  *
  */
-typedef struct mrsas_ident {
-	uint16_t vendor;
-	uint16_t device;
-	uint16_t subvendor;
-	uint16_t subdevice;
-	const char *desc;
-}	MRSAS_CTLR_ID;
-
-MRSAS_CTLR_ID device_table[] = {
-	{0x1000, MRSAS_TBOLT, 0xffff, 0xffff, "AVAGO Thunderbolt SAS Controller"},
-	{0x1000, MRSAS_INVADER, 0xffff, 0xffff, "AVAGO Invader SAS Controller"},
-	{0x1000, MRSAS_FURY, 0xffff, 0xffff, "AVAGO Fury SAS Controller"},
-	{0x1000, MRSAS_INTRUDER, 0xffff, 0xffff, "AVAGO Intruder SAS Controller"},
-	{0x1000, MRSAS_INTRUDER_24, 0xffff, 0xffff, "AVAGO Intruder_24 SAS Controller"},
-	{0x1000, MRSAS_CUTLASS_52, 0xffff, 0xffff, "AVAGO Cutlass_52 SAS Controller"},
-	{0x1000, MRSAS_CUTLASS_53, 0xffff, 0xffff, "AVAGO Cutlass_53 SAS Controller"},
-	{0, 0, 0, 0, NULL}
+struct pci_device_table mrsas_devs[] = {
+	{PCI_DEV(0x1000, MRSAS_TBOLT), PCI_SUBDEV(0xffff, 0xffff),
+	 PCI_DESCR("AVAGO Thunderbolt SAS Controller")},
+	{PCI_DEV(0x1000, MRSAS_INVADER), PCI_SUBDEV(0xffff, 0xffff),
+	 PCI_DESCR("AVAGO Invader SAS Controller")},
+	{PCI_DEV(0x1000, MRSAS_FURY), PCI_SUBDEV(0xffff, 0xffff),
+	 PCI_DESCR("AVAGO Fury SAS Controller")},
+	{PCI_DEV(0x1000, MRSAS_INTRUDER), PCI_SUBDEV(0xffff, 0xffff),
+	 PCI_DESCR("AVAGO Intruder SAS Controller")},
+	{PCI_DEV(0x1000, MRSAS_INTRUDER_24), PCI_SUBDEV(0xffff, 0xffff),
+	 PCI_DESCR("AVAGO Intruder_24 SAS Controller")},
+	{PCI_DEV(0x1000, MRSAS_CUTLASS_52), PCI_SUBDEV(0xffff, 0xffff),
+	 PCI_DESCR("AVAGO Cutlass_52 SAS Controller")},
+	{PCI_DEV(0x1000, MRSAS_CUTLASS_53), PCI_SUBDEV(0xffff, 0xffff),
+	 PCI_DESCR("AVAGO Cutlass_53 SAS Controller")}
 };
 
 /*
@@ -324,40 +321,24 @@ mrsas_clear_intr(struct mrsas_softc *sc)
  * PCI Support Functions
  *
  */
-static struct mrsas_ident *
-mrsas_find_ident(device_t dev)
-{
-	struct mrsas_ident *pci_device;
-
-	for (pci_device = device_table; pci_device->vendor != 0; pci_device++) {
-		if ((pci_device->vendor == pci_get_vendor(dev)) &&
-		    (pci_device->device == pci_get_device(dev)) &&
-		    ((pci_device->subvendor == pci_get_subvendor(dev)) ||
-		    (pci_device->subvendor == 0xffff)) &&
-		    ((pci_device->subdevice == pci_get_subdevice(dev)) ||
-		    (pci_device->subdevice == 0xffff)))
-			return (pci_device);
-	}
-	return (NULL);
-}
 
 static int
 mrsas_probe(device_t dev)
 {
 	static u_int8_t first_ctrl = 1;
-	struct mrsas_ident *id;
+	const struct pci_device_table *mrsd;
 
-	if ((id = mrsas_find_ident(dev)) != NULL) {
-		if (first_ctrl) {
-			printf("AVAGO MegaRAID SAS FreeBSD mrsas driver version: %s\n",
-			    MRSAS_VERSION);
-			first_ctrl = 0;
-		}
-		device_set_desc(dev, id->desc);
-		/* between BUS_PROBE_DEFAULT and BUS_PROBE_LOW_PRIORITY */
-		return (-30);
+	mrsd = PCI_MATCH(dev, mrsas_devs);
+	if (mrsd == NULL)
+		return (ENXIO);
+	if (first_ctrl) {
+		printf("AVAGO MegaRAID SAS FreeBSD mrsas driver version: %s\n",
+		       MRSAS_VERSION);
+		first_ctrl = 0;
 	}
-	return (ENXIO);
+	device_set_desc(dev, mrsd->descr);
+	/* between BUS_PROBE_DEFAULT and BUS_PROBE_LOW_PRIORITY */
+	return (-30);
 }
 
 /*
@@ -4598,4 +4579,5 @@ static driver_t mrsas_driver = {
 static devclass_t mrsas_devclass;
 
 DRIVER_MODULE(mrsas, pci, mrsas_driver, mrsas_devclass, 0, 0);
+PCI_PNP_INFO(mrsas_devs);
 MODULE_DEPEND(mrsas, cam, 1, 1, 1);
