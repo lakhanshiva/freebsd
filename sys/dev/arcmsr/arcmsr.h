@@ -105,9 +105,11 @@
 #define PCI_DEVICE_ID_ARECA_1203        0x1203 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1210        0x1210 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1212        0x1212 /* Device ID	*/
+#define PCI_DEVICE_ID_ARECA_1213        0x1213 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1214        0x1214 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1220        0x1220 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1222        0x1222 /* Device ID	*/
+#define PCI_DEVICE_ID_ARECA_1223        0x1223 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1230        0x1230 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1231        0x1231 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1260        0x1260 /* Device ID	*/
@@ -119,6 +121,7 @@
 #define PCI_DEVICE_ID_ARECA_1680        0x1680 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1681        0x1681 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1880        0x1880 /* Device ID	*/
+#define PCI_DEVICE_ID_ARECA_1882        0x1882 /* Device ID	*/
 #define PCI_DEVICE_ID_ARECA_1884        0x1884 /* Device ID	*/
 
 #define ARECA_SUB_DEV_ID_1880	0x1880 /* Subsystem Device ID	*/
