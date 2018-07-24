@@ -43,12 +43,9 @@ __FBSDID("$FreeBSD$");
 #include <dev/pci/pcivar.h>
 
 static int	ignore_pci_probe(device_t dev);
-static struct ignore_pci_dev {
-	uint32_t devid;
-	const char *description;
-} ignore_pci_devs[] = {
-	{0x10001042, "ignored"},
-	{0, 0},
+struct pci_device_table ignore_pci_devs[] = {
+	{PCI_DEV(0x1042, 0x1000),
+	 PCI_DESCR("ignored")}
 };
 
 static device_method_t ignore_pci_methods[] = {
@@ -67,17 +64,16 @@ static driver_t ignore_pci_driver = {
 static devclass_t ignore_pci_devclass;
 
 DRIVER_MODULE(ignore_pci, pci, ignore_pci_driver, ignore_pci_devclass, 0, 0);
-MODULE_PNP_INFO("U32:vendor/device", pci, ignore_pci, ignore_pci_devs,
-    sizeof(ignore_pci_devs[0]), nitems(ignore_pci_devs) - 1);
+PCI_PNP_INFO(ignore_pci_devs);
 
 static int
 ignore_pci_probe(device_t dev)
 {
-    switch (pci_get_devid(dev)) {
-    case 0x10001042ul:	/* SMC 37C665 */
-	device_set_desc(dev, "ignored");
-	device_quiet(dev);
-	return(-10000);
-    }
-    return(ENXIO);
+	const struct pci_device_table *ignd;
+	
+	ignd = PCI_MATCH(dev, ignore_pci_devs);
+	if (ignd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ignd->descr);
+	return (BUS_PROBE_DEFAULT);
 }

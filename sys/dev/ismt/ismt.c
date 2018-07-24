@@ -717,33 +717,30 @@ fail:
 #define ID_INTEL_S1200_SMT0		0x0c598086
 #define ID_INTEL_S1200_SMT1		0x0c5a8086
 #define ID_INTEL_C2000_SMT		0x1f158086
+#define INTEL_VENDORID		0x8086
+#define DID_INTEL_S1200_SMT0		0x0c59
+#define DID_INTEL_S1200_SMT1		0x0c5a
+#define DID_INTEL_C2000_SMT		0x1f15
 
-static struct ismt_dev {
-	uint32_t devid;
-	const char *description;
-} ismt_devs[] = {
-	{ID_INTEL_S1200_SMT0, "Atom Processor S1200 SMBus 2.0 Controller 0"},
-	{ID_INTEL_S1200_SMT1, "Atom Processor S1200 SMBus 2.0 Controller 1"},
-	{ID_INTEL_C2000_SMT, "Atom Processor C2000 SMBus 2.0"},
-	{0, NULL},
+struct pci_device_table ismt_devs[] = {
+	{PCI_DEV(INTEL_VENDORID, DID_INTEL_S1200_SMT0),
+	 PCI_DESCR("Atom Processor S1200 SMBus 2.0 Controller 0")},
+	{PCI_DEV(INTEL_VENDORID, DID_INTEL_S1200_SMT1),
+	 PCI_DESCR("Atom Processor S1200 SMBus 2.0 Controller 1")},
+	{PCI_DEV(INTEL_VENDORID, DID_INTEL_C2000_SMT),
+	 PCI_DESCR("Atom Processor C2000 SMBus 2.0")}
 };
 
 static int
 ismt_probe(device_t dev)
 {
-	uint32_t did;
-        size_t i;
-
-	did = pci_get_devid(dev);
-	const struct ismt_dev *ismtd;
-	for (i = 0; i < nitems(ismt_devs) - 1; i++) {
-		ismtd = &ismt_devs[i];
-		if (did == ismtd->devid) {
-			device_set_desc(dev, ismtd->description);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-	return (ENXIO);
+	const struct pci_device_table *ismtd;
+	
+	ismtd = PCI_MATCH(dev, ismt_devs);
+	if (ismtd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ismtd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 /* Device methods */
@@ -776,8 +773,7 @@ static driver_t ismt_pci_driver = {
 static devclass_t ismt_pci_devclass;
 
 DRIVER_MODULE(ismt, pci, ismt_pci_driver, ismt_pci_devclass, 0, 0);
-MODULE_PNP_INFO("W32:vendor/device;D:#", pci, ismt, ismt_devs,
-    sizeof(ismt_devs[0]), nitems(ismt_devs) - 1);
+PCI_PNP_INFO(ismt_devs);
 DRIVER_MODULE(smbus, ismt, smbus_driver, smbus_devclass, 0, 0);
 
 MODULE_DEPEND(ismt, pci, 1, 1, 1);

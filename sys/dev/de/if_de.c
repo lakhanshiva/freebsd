@@ -161,19 +161,19 @@ static void	tulip_dma_map_addr(void *, bus_dma_segment_t *, int, int);
 static void	tulip_dma_map_rxbuf(void *, bus_dma_segment_t *, int,
 		    bus_size_t, int);
 
-static struct de_dev {
-	uint16_t vendorid;
-	uint16_t deviceid;
-	uint8_t revid;
-	const char *description;
-} de_devs[] = {
-	{DEC_VENDORID, CHIPID_21040, 0, "Digital 21040 Ethernet"},
-	{DEC_VENDORID, CHIPID_21041, 0, "Digital 21041 Ethernet"},
-	{DEC_VENDORID, CHIPID_21140, 0, "Digital 21140 Fast Ethernet"},
-	{DEC_VENDORID, CHIPID_21140, 0x20, "Digital 21140A Fast Ethernet"},
-	{DEC_VENDORID, CHIPID_21142, 0, "Digital 21142 Fast Ethernet"},
-	{DEC_VENDORID, CHIPID_21142, 0x20, "Digital 21143 Fast Ethernet"},
-	{0, 0, 0, 0},
+struct pci_device_table de_devs[] = {
+	{PCI_DEV(DEC_VENDORID, CHIPID_21040), PCI_REVID(0),
+	 PCI_DESCR("Digital 21040 Ethernet")},
+	{PCI_DEV(DEC_VENDORID, CHIPID_21041), PCI_REVID(0),
+	 PCI_DESCR("Digital 21041 Ethernet")},
+	{PCI_DEV(DEC_VENDORID, CHIPID_21140), PCI_REVID(0),
+	 PCI_DESCR("Digital 21140 Fast Ethernet")},
+	{PCI_DEV(DEC_VENDORID, CHIPID_21140), PCI_REVID(0x20),
+	 PCI_DESCR("Digital 21140A Fast Ethernet")},
+	{PCI_DEV(DEC_VENDORID, CHIPID_21142), PCI_REVID(0),
+	 PCI_DESCR("Digital 21142 Fast Ethernet")},
+	{PCI_DEV(DEC_VENDORID, CHIPID_21142), PCI_REVID(0x20),
+	 PCI_DESCR("Digital 21143 Fast Ethernet")}
 };
 
 static void
@@ -4685,17 +4685,10 @@ tulip_initring(
 static int
 tulip_pci_probe(device_t dev)
 {
-	const char *name = NULL;
-    	const struct de_dev *ded;
+    	const struct pci_device_table *ded;
 	uint16_t vid;
-	uint16_t did;
-	uint8_t revid;
-	size_t i;
 
-	vid = pci_get_vendor(dev);
-	did = pci_get_device(dev);
-	revid = pci_get_revid(dev);
-	
+	vid = pci_get_vendor(dev);	
 	if (vid != DEC_VENDORID)
 		return ENXIO;
 
@@ -4705,19 +4698,12 @@ tulip_pci_probe(device_t dev)
 	*/
 	if (pci_get_subvendor(dev) == 0x1376)
 		return ENXIO;
-	
-	for (i = 0; i < nitems(de_devs); i++) {
-		ded = &de_devs[i];
-		if ((ded->deviceid == did) &&
-		    ((revid >= ded->revid) || (ded->revid == 0))) {
-			    name = ded->description;
-		}
-	}
-	if (name) {
-		device_set_desc(dev, name);
-		return BUS_PROBE_LOW_PRIORITY;
-	}
-	return ENXIO;
+
+	ded = PCI_MATCH(dev, de_devs);
+	if (ded == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ded->descr);
+	return (BUS_PROBE_LOW_PRIORITY);
 }
 
 static int
@@ -4919,8 +4905,7 @@ static driver_t tulip_pci_driver = {
 static devclass_t tulip_devclass;
 
 DRIVER_MODULE(de, pci, tulip_pci_driver, tulip_devclass, 0, 0);
-MODULE_PNP_INFO("U16:vendor;U16:device", pci, de, de_devs,
-    sizeof(de_devs[0]), nitems(de_devs) - 1);
+PCI_PNP_INFO(de_devs);
 
 #ifdef DDB
 void	tulip_dumpring(int unit, int ring);

@@ -64,7 +64,7 @@ static int	dpt_pci_attach	(device_t);
 
 struct pci_device_table dpt_devs[] = {
 	{PCI_DEV(DPT_VENDOR_ID, DPT_DEVICE_ID),
-	 PCI_DESCR("DPT Caching SCSI RAID Controller")},
+	 PCI_DESCR("DPT Caching SCSI RAID Controller")}
 };
 
 static int
@@ -75,7 +75,7 @@ dpt_pci_probe (device_t dev)
 	dpd = PCI_MATCH(dev, dpt_devs);
 	if (dpd == NULL)
 		return (ENXIO);
-	device_set_desc(dev, dpd->description);
+	device_set_desc(dev, dpd->descr);
 	return (BUS_PROBE_DEFAULT);
 }
 

@@ -128,24 +128,19 @@ static struct imcsmb_reg_set imcsmb_regs[] = {
 	},
 };
 
-static struct imcsmb_pci_device {
-	uint16_t   vendorid;
-	uint16_t   deviceid;
-	char		*name;
-} imcsmb_pci_devices[] = {
-	{PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC0_SBX,
-	    "Intel Sandybridge Xeon iMC 0 SMBus controllers"	},
-	{PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC0_IBX,
-	    "Intel Ivybridge Xeon iMC 0 SMBus controllers"	},
-	{PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC0_HSX,
-	    "Intel Haswell Xeon iMC 0 SMBus controllers"	},
-	{PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC1_HSX,
-	    "Intel Haswell Xeon iMC 1 SMBus controllers"	},
-	{PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC0_BDX,
-	    "Intel Broadwell Xeon iMC 0 SMBus controllers"	},
-	{PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC1_BDX,
-	    "Intel Broadwell Xeon iMC 1 SMBus controllers"	},
-	{0, 0, NULL},
+struct pci_device_table imcsmb_pci_devs[] = {
+	{PCI_DEV(PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC0_SBX),
+	 PCI_DESCR("Intel Sandybridge Xeon iMC 0 SMBus controllers")},
+	{PCI_DEV(PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC0_IBX),
+	 PCI_DESCR("Intel Ivybridge Xeon iMC 0 SMBus controllers")},
+	{PCI_DEV(PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC0_HSX),
+	 PCI_DESCR("Intel Haswell Xeon iMC 0 SMBus controllers")},
+	{PCI_DEV(PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC1_HSX),
+	 PCI_DESCR("Intel Haswell Xeon iMC 1 SMBus controllers")},
+	{PCI_DEV(PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC0_BDX),
+	 PCI_DESCR("Intel Broadwell Xeon iMC 0 SMBus controllers")},
+	{PCI_DEV(PCI_VENDOR_INTEL, IMCSMB_PCI_DEV_ID_IMC1_BDX),
+	 PCI_DESCR("Intel Broadwell Xeon iMC 1 SMBus controllers")}
 };
 
 /* Device methods. */
@@ -236,29 +231,13 @@ imcsmb_pci_detach(device_t dev)
 static int
 imcsmb_pci_probe(device_t dev)
 {
-	struct imcsmb_pci_device *pci_device;
-	int rc;
-	uint16_t pci_dev_id;
-
-	rc = ENXIO;
-
-	if (pci_get_vendor(dev) != PCI_VENDOR_INTEL) {
-		goto out;
-	}
-
-	pci_dev_id = pci_get_device(dev);
-	for (pci_device = imcsmb_pci_devices;
-	  pci_device->name != NULL;
-	  pci_device++) {
-		if (pci_dev_id == pci_device->deviceid) {
-			device_set_desc(dev, pci_device->name);
-			rc = BUS_PROBE_DEFAULT;
-			goto out;
-		}
-	}
-
-out:
-	return (rc);
+	const struct pci_device_table *imcsd;
+	
+	imcsd = PCI_MATCH(dev, imcsmb_pci_devs);
+	if (imcsd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, imcsd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 /**
@@ -340,8 +319,7 @@ static driver_t imcsmb_pci_driver = {
 };
 
 DRIVER_MODULE(imcsmb_pci, pci, imcsmb_pci_driver, imcsmb_pci_devclass, 0, 0);
-MODULE_PNP_INFO("U16:vendor;U16:device;D:#", pci, imcsmb_pci, imcsmb_pci_devices,
-    sizeof(imcsmb_pci_devices[0]), nitems(imcsmb_pci_devices) - 1);
+PCI_PNP_INFO(imcsmb_pci_devs);
 MODULE_DEPEND(imcsmb_pci, pci, 1, 1, 1);
 MODULE_VERSION(imcsmb_pci, 1);
 
