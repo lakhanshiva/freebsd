@@ -99,17 +99,13 @@ SYSCTL_INT(_hw_malo_pci, OID_AUTO, msi_disable, CTLFLAG_RWTUN, &msi_disable,
 #define	DEVICEID_MRVL_88W8335R1		0X1FAA
 #define	DEVICEID_MRVL_88W8335R2		0X1FAB
 
-static struct malo_product {
-	uint16_t			mp_vendorid;
-	uint16_t			mp_deviceid;
-	const char			*mp_name;
-} malo_products[] = {
-	{ VENDORID_MARVELL, DEVICEID_MRVL_88W8310,
-	    "Marvell Libertas 88W8310 802.11g Wireless Adapter" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_88W8335R1,
-	    "Marvell Libertas 88W8335 802.11g Wireless Adapter" },
-	{ VENDORID_MARVELL, DEVICEID_MRVL_88W8335R2,
-	    "Marvell Libertas 88W8335 802.11g Wireless Adapter" }
+struct pci_device_table malo_devs[] = {
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_88W8310),
+	 PCI_DESCR("Marvell Libertas 88W8310 802.11g Wireless Adapter")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_88W8335R1),
+	 PCI_DESCR("Marvell Libertas 88W8335 802.11g Wireless Adapter")},
+	{PCI_DEV(VENDORID_MARVELL, DEVICEID_MRVL_88W8335R2),
+	 PCI_DESCR("Marvell Libertas 88W8335 802.11g Wireless Adapter")}
 };
 
 static struct resource_spec malo_res_spec_mem[] = {
@@ -133,22 +129,13 @@ static int	malo_pci_detach(device_t);
 static int
 malo_pci_probe(device_t dev)
 {
-	struct malo_product *mp;
-	uint16_t vendor, devid;
-	int i;
+	const struct pci_device_table *mald;
 
-	vendor = pci_get_vendor(dev);
-	devid = pci_get_device(dev);
-	mp = malo_products;
-
-	for (i = 0; i < nitems(malo_products); i++, mp++) {
-		if (vendor == mp->mp_vendorid && devid == mp->mp_deviceid) {
-			device_set_desc(dev, mp->mp_name);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-
-	return (ENXIO);
+	mald = PCI_MATCH(dev, malo_devs);
+	if (mald == NULL)
+		return (ENXIO);
+	device_set_desc(dev, mald->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -349,6 +336,7 @@ static driver_t malo_pci_driver = {
 
 static	devclass_t malo_devclass;
 DRIVER_MODULE(malo, pci, malo_pci_driver, malo_devclass, 0, 0);
+PCI_PNP_INFO(malo_devs);
 MODULE_VERSION(malo, 1);
 MODULE_DEPEND(malo, wlan, 1, 1, 1);		/* 802.11 media layer */
 MODULE_DEPEND(malo, firmware, 1, 1, 1);
