@@ -84,46 +84,34 @@ struct mwl_pci_softc {
 #define	BS_BAR0	0x10
 #define	BS_BAR1	0x14
 
-struct mwl_pci_ident {
-	uint16_t	vendor;
-	uint16_t	device;
-	const char	*name;
+struct pci_device_table mwl_devs[] = {
+	{PCI_DEV(0x11ab, 0x2a02),
+	 PCI_DESCR("Marvell 88W8363")},
+	{PCI_DEV(0x11ab, 0x2a03),
+	 PCI_DESCR("Marvell 88W8363")},
+	{PCI_DEV(0x11ab, 0x2a0a),
+	 PCI_DESCR("Marvell 88W8363")},
+	{PCI_DEV(0x11ab, 0x2a0b),
+	 PCI_DESCR("Marvell 88W8363")},
+	{PCI_DEV(0x11ab, 0x2a0c),
+	 PCI_DESCR("Marvell 88W8363")},
+	{PCI_DEV(0x11ab, 0x2a21),
+	 PCI_DESCR("Marvell 88W8363")},
+	{PCI_DEV(0x11ab, 0x2a24),
+	 PCI_DESCR("Marvell 88W8363")}
 };
 
-static const struct mwl_pci_ident mwl_pci_ids[] = {
-	{ 0x11ab, 0x2a02, "Marvell 88W8363" },
-	{ 0x11ab, 0x2a03, "Marvell 88W8363" },
-	{ 0x11ab, 0x2a0a, "Marvell 88W8363" },
-	{ 0x11ab, 0x2a0b, "Marvell 88W8363" },
-	{ 0x11ab, 0x2a0c, "Marvell 88W8363" },
-	{ 0x11ab, 0x2a21, "Marvell 88W8363" },
-	{ 0x11ab, 0x2a24, "Marvell 88W8363" },
-
-	{ 0, 0, NULL }
-};
-
-const static struct mwl_pci_ident *
-mwl_pci_lookup(int vendor, int device)
-{
-	const struct mwl_pci_ident *ident;
-
-	for (ident = mwl_pci_ids; ident->name != NULL; ident++)
-		if (vendor == ident->vendor && device == ident->device)
-			return ident;
-	return NULL;
-}
 
 static int
 mwl_pci_probe(device_t dev)
 {
-	const struct mwl_pci_ident *ident;
+	const struct pci_device_table *mwld;
 
-	ident = mwl_pci_lookup(pci_get_vendor(dev), pci_get_device(dev));
-	if (ident != NULL) {
-		device_set_desc(dev, ident->name);
-		return BUS_PROBE_DEFAULT;
-	}
-	return ENXIO;
+	mwld = PCI_MATCH(dev, mwl_devs);
+	if (mwld == NULL)
+		return (ENXIO);
+	device_set_desc(dev, mwld->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -290,6 +278,7 @@ static driver_t mwl_pci_driver = {
 };
 static	devclass_t mwl_devclass;
 DRIVER_MODULE(mwl, pci, mwl_pci_driver, mwl_devclass, 0, 0);
+PCI_PNP_INFO(mwl_devs);
 MODULE_VERSION(mwl, 1);
 MODULE_DEPEND(mwl, wlan, 1, 1, 1);		/* 802.11 media layer */
 MODULE_DEPEND(mwl, firmware, 1, 1, 1);
