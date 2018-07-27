@@ -121,6 +121,37 @@ struct nfsmb_softc {
 	struct mtx lock;
 };
 
+struct pci_device_table nfsmb_devs[] = {
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF2_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF2_ULTRA_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF3_PRO150_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF3_250GB_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_04_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_51_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_55_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_61_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_65_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_67_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_73_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_78S_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+	{PCI_DEV(NFSMB_VENDORID_NVIDIA, NFSMB_DEVICEID_NF4_79_SMB),
+	 PCI_DESCR("nForce2/3/4 MCP SMBus Controller")},
+};
+
 #define	NFSMB_LOCK(nfsmb)		mtx_lock(&(nfsmb)->lock)
 #define	NFSMB_UNLOCK(nfsmb)		mtx_unlock(&(nfsmb)->lock)
 #define	NFSMB_LOCK_ASSERT(nfsmb)	mtx_assert(&(nfsmb)->lock, MA_OWNED)
@@ -144,34 +175,13 @@ nfsmbsub_probe(device_t dev)
 static int
 nfsmb_probe(device_t dev)
 {
-	u_int16_t vid;
-	u_int16_t did;
+	const struct pci_device_table *nfsd;
 
-	vid = pci_get_vendor(dev);
-	did = pci_get_device(dev);
-
-	if (vid == NFSMB_VENDORID_NVIDIA) {
-		switch(did) {
-		case NFSMB_DEVICEID_NF2_SMB:
-		case NFSMB_DEVICEID_NF2_ULTRA_SMB:
-		case NFSMB_DEVICEID_NF3_PRO150_SMB:
-		case NFSMB_DEVICEID_NF3_250GB_SMB:
-		case NFSMB_DEVICEID_NF4_SMB:
-		case NFSMB_DEVICEID_NF4_04_SMB:
-		case NFSMB_DEVICEID_NF4_51_SMB:
-		case NFSMB_DEVICEID_NF4_55_SMB:
-		case NFSMB_DEVICEID_NF4_61_SMB:
-		case NFSMB_DEVICEID_NF4_65_SMB:
-		case NFSMB_DEVICEID_NF4_67_SMB:
-		case NFSMB_DEVICEID_NF4_73_SMB:
-		case NFSMB_DEVICEID_NF4_78S_SMB:
-		case NFSMB_DEVICEID_NF4_79_SMB:
-			device_set_desc(dev, "nForce2/3/4 MCP SMBus Controller");
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-
-	return (ENXIO);
+	nfsd = PCI_MATCH(dev, nfsmb_devs);
+	if (nfsd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, nfsd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -649,6 +659,7 @@ static driver_t nfsmbsub_driver = {
 };
 
 DRIVER_MODULE(nfsmb, pci, nfsmb_driver, nfsmb_devclass, 0, 0);
+PCI_PNP_INFO(nfsmb_devs);
 DRIVER_MODULE(nfsmb, nfsmb, nfsmbsub_driver, nfsmb_devclass, 0, 0);
 DRIVER_MODULE(smbus, nfsmb, smbus_driver, smbus_devclass, 0, 0);
 
