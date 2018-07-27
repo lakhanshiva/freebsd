@@ -142,10 +142,9 @@ MODULE_DEPEND(nge, miibus, 1, 1, 1);
 /*
  * Various supported device vendors/types and their names.
  */
-static const struct nge_type nge_devs[] = {
-	{ NGE_VENDORID, NGE_DEVICEID,
-	    "National Semiconductor Gigabit Ethernet" },
-	{ 0, 0, NULL }
+struct pci_device_table nge_devs[] = {
+	{PCI_DEV(NGE_VENDORID, NGE_DEVICEID),
+	 PCI_DESCR("National Semiconductor Gigabit Ethernet")}
 };
 
 static int nge_probe(device_t);
@@ -243,6 +242,7 @@ static driver_t nge_driver = {
 static devclass_t nge_devclass;
 
 DRIVER_MODULE(nge, pci, nge_driver, nge_devclass, 0, 0);
+PCI_PNP_INFO(nge_devs);
 DRIVER_MODULE(miibus, nge, miibus_driver, miibus_devclass, 0, 0);
 
 #define NGE_SETBIT(sc, reg, x)				\
@@ -795,20 +795,13 @@ nge_reset(struct nge_softc *sc)
 static int
 nge_probe(device_t dev)
 {
-	const struct nge_type *t;
+	const struct pci_device_table *nged;
 
-	t = nge_devs;
-
-	while (t->nge_name != NULL) {
-		if ((pci_get_vendor(dev) == t->nge_vid) &&
-		    (pci_get_device(dev) == t->nge_did)) {
-			device_set_desc(dev, t->nge_name);
-			return (BUS_PROBE_DEFAULT);
-		}
-		t++;
-	}
-
-	return (ENXIO);
+	nged = PCI_MATCH(dev, nge_devs);
+	if (nged == NULL)
+		return (ENXIO);
+	device_set_desc(dev, nged->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 /*
