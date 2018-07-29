@@ -71,13 +71,12 @@ MODULE_DEPEND(bfe, miibus, 1, 1, 1);
 
 #define BFE_DEVDESC_MAX		64	/* Maximum device description length */
 
-static struct bfe_type bfe_devs[] = {
-	{ BCOM_VENDORID, BCOM_DEVICEID_BCM4401,
-		"Broadcom BCM4401 Fast Ethernet" },
-	{ BCOM_VENDORID, BCOM_DEVICEID_BCM4401B0,
-		"Broadcom BCM4401-B0 Fast Ethernet" },
-		{ 0, 0, NULL }
-};
+struct pci_device_table bfe_devs[] = {
+	{PCI_DEV(BCOM_VENDORID, BCOM_DEVICEID_BCM4401),
+	 PCI_DESCR("Broadcom BCM4401 Fast Ethernet")},
+	{PCI_DEV(BCOM_VENDORID, BCOM_DEVICEID_BCM4401B0),
+	 PCI_DESCR("Broadcom BCM4401-B0 Fast Ethernet")}
+};;
 
 static int  bfe_probe				(device_t);
 static int  bfe_attach				(device_t);
@@ -157,8 +156,7 @@ static driver_t bfe_driver = {
 static devclass_t bfe_devclass;
 
 DRIVER_MODULE(bfe, pci, bfe_driver, bfe_devclass, 0, 0);
-MODULE_PNP_INFO("U16:vendor;U16:device;D:#", pci, bfe, bfe_devs,
-    sizeof(bfe_devs[0]), nitems(bfe_devs) - 1);
+PCI_PNP_INFO(bfe_devs);
 DRIVER_MODULE(miibus, bfe, miibus_driver, miibus_devclass, 0, 0);
 
 /*
@@ -167,20 +165,13 @@ DRIVER_MODULE(miibus, bfe, miibus_driver, miibus_devclass, 0, 0);
 static int
 bfe_probe(device_t dev)
 {
-	struct bfe_type *t;
+	const struct pci_device_table *bfed;
 
-	t = bfe_devs;
-
-	while (t->bfe_name != NULL) {
-		if (pci_get_vendor(dev) == t->bfe_vid &&
-		    pci_get_device(dev) == t->bfe_did) {
-			device_set_desc(dev, t->bfe_name);
-			return (BUS_PROBE_DEFAULT);
-		}
-		t++;
-	}
-
-	return (ENXIO);
+	bfed = PCI_MATCH(dev, bfe_devs);
+	if (bfed == NULL)
+		return (ENXIO);
+	device_set_desc(dev, bfed->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 struct bfe_dmamap_arg {

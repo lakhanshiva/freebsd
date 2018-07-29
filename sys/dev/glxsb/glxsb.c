@@ -219,14 +219,9 @@ static int  glxsb_crypto_encdec(struct cryptop *, struct cryptodesc *,
 static void glxsb_crypto_task(void *, int);
 static int  glxsb_crypto_process(device_t, struct cryptop *, int);
 
-static struct glxsb_dev{
-	uint16_t vendorid;
-	uint16_t deviceid;
-	const char *description;
-} glxsb_devs[] = {
-	{PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODE_LX_CRYPTO,
-	    "AMD Geode LX Security Block (AES-128-CBC, RNG)"},
-	{0, 0, NULL},
+struct pci_device_table glxsb_devs[] = {
+	{PCI_DEV(PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODE_LX_CRYPTO),
+	 PCI_DESCR("AMD Geode LX Security Block (AES-128-CBC, RNG)")}
 };
 
 static device_method_t glxsb_methods[] = {
@@ -252,31 +247,20 @@ static driver_t glxsb_driver = {
 static devclass_t glxsb_devclass;
 
 DRIVER_MODULE(glxsb, pci, glxsb_driver, glxsb_devclass, 0, 0);
-MODULE_PNP_INFO("U16:vendor;U16:device", pci, glxsb, glxsb_devs,
-    sizeof(glxsb_devs[0]), nitems(glxsb_devs) - 1);
+PCI_PNP_INFO(glxsb_devs);
 MODULE_VERSION(glxsb, 1);
 MODULE_DEPEND(glxsb, crypto, 1, 1, 1);
 
 static int
 glxsb_probe(device_t dev)
 {
-	uint16_t vid;
-	uint16_t did;
-	const struct glxsb_dev *glxd;
-	size_t i;
-	
-	vid = pci_get_vendor(dev);
-	did = pci_get_device(dev);
-	for(i=0; i<nitems(glxsb_devs) - 1; i++){
-		glxd = &glxd_devs[i];
-		if (vid == glxd->vendorid &&
-		    did == glxd->deviceid){
-			device_set_desc(dev, glxd->description);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
+	const struct pci_device_table *glxd;
 
-	return (ENXIO);
+	glxd = PCI_MATCH(dev, glxsb_devs);
+	if (glxd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, glxd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int

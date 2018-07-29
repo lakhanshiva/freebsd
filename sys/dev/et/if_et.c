@@ -152,16 +152,11 @@ static void	et_setmulti(struct et_softc *);
 static void	et_tick(void *);
 static void	et_stats_update(struct et_softc *);
 
-static const struct et_dev {
-	uint16_t	vid;
-	uint16_t	did;
-	const char	*desc;
-} et_devices[] = {
-	{ PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1310,
-	  "Agere ET1310 Gigabit Ethernet" },
-	{ PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1310_FAST,
-	  "Agere ET1310 Fast Ethernet" },
-	{ 0, 0, NULL }
+struct pci_device_table et_devices[] = {
+	{PCI_DEV(PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1310),
+	 PCI_DESCR("Agere ET1310 Gigabit Ethernet")},
+	{PCI_DEV(PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1310_FAST),
+	 PCI_DESCR("Agere ET1310 Fast Ethernet")}
 };
 
 static device_method_t et_methods[] = {
@@ -188,8 +183,7 @@ static driver_t et_driver = {
 static devclass_t et_devclass;
 
 DRIVER_MODULE(et, pci, et_driver, et_devclass, 0, 0);
-MODULE_PNP_INFO("U16:vendor;U16:device;D:#", pci, et, et_devices,
-    sizeof(et_devices[0]), nitems(et_devices) - 1);
+PCI_PNP_INFO(et_devices);
 DRIVER_MODULE(miibus, et, miibus_driver, miibus_devclass, 0, 0);
 
 static int	et_rx_intr_npkts = 32;
@@ -205,19 +199,13 @@ TUNABLE_INT("hw.et.tx_intr_nsegs", &et_tx_intr_nsegs);
 static int
 et_probe(device_t dev)
 {
-	const struct et_dev *d;
-	uint16_t did, vid;
+	const struct pci_device_table *etd;
 
-	vid = pci_get_vendor(dev);
-	did = pci_get_device(dev);
-
-	for (d = et_devices; d->desc != NULL; ++d) {
-		if (vid == d->vid && did == d->did) {
-			device_set_desc(dev, d->desc);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-	return (ENXIO);
+	etd = PCI_MATCH(dev, et_devices);
+	if (etd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, etd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int

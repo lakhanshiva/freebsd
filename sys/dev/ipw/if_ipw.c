@@ -102,10 +102,9 @@ struct ipw_ident {
 	const char	*name;
 };
 
-static const struct ipw_ident ipw_ident_table[] = {
-	{ 0x8086, 0x1043, "Intel(R) PRO/Wireless 2100 MiniPCI" },
-
-	{ 0, 0, NULL }
+struct pci_device_table ipw_ident_table[] = {
+	{PCI_DEV(0x8086, 0x1043),
+	 PCI_DESCR("Intel(R) PRO/Wireless 2100 MiniPCI")}
 };
 
 static struct ieee80211vap *ipw_vap_create(struct ieee80211com *,
@@ -202,24 +201,20 @@ static driver_t ipw_driver = {
 static devclass_t ipw_devclass;
 
 DRIVER_MODULE(ipw, pci, ipw_driver, ipw_devclass, NULL, NULL);
-MODULE_PNP_INFO("U16:vendor;U16:device;D:#", pci, ipw, ipw_ident_table,
-    sizeof(ipw_ident_table[0]), nitems(ipw_ident_table) - 1);
+PCI_PNP_INFO(ipw_ident_table);
 
 MODULE_VERSION(ipw, 1);
 
 static int
 ipw_probe(device_t dev)
 {
-	const struct ipw_ident *ident;
+	const struct pci_device_table *ident;
 
-	for (ident = ipw_ident_table; ident->name != NULL; ident++) {
-		if (pci_get_vendor(dev) == ident->vendor &&
-		    pci_get_device(dev) == ident->device) {
-			device_set_desc(dev, ident->name);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-	return ENXIO;
+	ident = PCI_MATCH(dev, ipw_ident_table);
+	if (ident == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ident->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 /* Base Address Register */
