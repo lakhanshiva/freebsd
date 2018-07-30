@@ -88,6 +88,10 @@ static	int xlp_rsa_probe(device_t);
 static	int xlp_rsa_attach(device_t);
 static	int xlp_rsa_detach(device_t);
 
+struct pci_device_table xlp_rsa_devs[] = {
+	{PCI_VENDOR_NETLOGIC, PCI_DEVICE_ID_NLM_RSA}
+};
+
 static device_method_t xlp_rsa_methods[] = {
 	/* device interface */
 	DEVMETHOD(device_probe, xlp_rsa_probe),
@@ -114,6 +118,7 @@ static driver_t xlp_rsa_driver = {
 static devclass_t xlp_rsa_devclass;
 
 DRIVER_MODULE(nlmrsa, pci, xlp_rsa_driver, xlp_rsa_devclass, 0, 0);
+PCI_PNP_INFO(xlp_rsa_devs);
 MODULE_DEPEND(nlmrsa, crypto, 1, 1, 1);
 
 #ifdef NLM_RSA_DEBUG
@@ -254,13 +259,13 @@ static int
 xlp_rsa_probe(device_t dev)
 {
 	struct xlp_rsa_softc *sc;
+	const struct pci_device_table *xlprsad;
 
-	if (pci_get_vendor(dev) == PCI_VENDOR_NETLOGIC &&
-	    pci_get_device(dev) == PCI_DEVICE_ID_NLM_RSA) {
-		sc = device_get_softc(dev);
-		return (BUS_PROBE_DEFAULT);
-	}
-	return (ENXIO);
+	xlprsad = PCI_MATCH(dev, xlp_rsa_devs);
+	if (xlprsad == NULL)
+		return (ENXIO);
+	sc = device_get_softc(dev);
+	return (BUS_PROBE_DEFAULT);
 }
 
 /*
