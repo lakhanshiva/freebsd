@@ -80,9 +80,6 @@ static driver_t nvme_pci_driver = {
 	sizeof(struct nvme_controller),
 };
 
-DRIVER_MODULE(nvme, pci, nvme_pci_driver, nvme_devclass, nvme_modevent, 0);
-MODULE_VERSION(nvme, 1);
-MODULE_DEPEND(nvme, cam, 1, 1, 1);
 
 static struct _pcsid
 {
@@ -108,6 +105,13 @@ static struct _pcsid
 	{ 0xa822144d,		0, 0, "Samsung PM1725a", QUIRK_DELAY_B4_CHK_RDY },
 	{ 0x00000000,		0, 0, NULL  }
 };
+
+
+DRIVER_MODULE(nvme, pci, nvme_pci_driver, nvme_devclass, nvme_modevent, 0);
+MODULE_PNP_INFO("W32:vendor/device", pci, nvme, pci_ids,
+    sizeof(pci_ids[0]), nitems(pci_ids) - 1);
+MODULE_VERSION(nvme, 1);
+MODULE_DEPEND(nvme, cam, 1, 1, 1);
 
 static int
 nvme_match(uint32_t devid, uint16_t subdevice, struct _pcsid *ep)
