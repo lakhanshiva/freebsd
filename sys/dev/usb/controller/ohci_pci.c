@@ -97,6 +97,57 @@ static device_attach_t ohci_pci_attach;
 static device_detach_t ohci_pci_detach;
 static usb_take_controller_t ohci_pci_take_controller;
 
+struct pci_device_table ohci_devs[] = {
+	{PCI_DEVID(0x523710b9),
+	 PCI_DESCR("AcerLabs M5237 (Aladdin-V) USB controller")},
+	{PCI_DEVID(0x740c1022),
+	 PCI_DESCR("AMD-756 USB Controller")},
+	{PCI_DEVID(0x74141022),
+	 PCI_DESCR("AMD-766 USB Controller")},
+	{PCI_DEVID(0x78071022),
+	 PCI_DESCR("AMD FCH USB Controller")},
+	{PCI_DEVID(0x43741002),
+	 PCI_DESCR("ATI SB400 USB Controller")},
+	{PCI_DEVID(0x43751002),
+	 PCI_DESCR("ATI SB400 USB Controller")},
+	{PCI_DEVID(0x43971002),
+	 PCI_DESCR("AMD SB7x0/SB8x0/SB9x0 USB controller")},
+	{PCI_DEVID(0x43981002),
+	 PCI_DESCR("AMD SB7x0/SB8x0/SB9x0 USB controller")},
+	{PCI_DEVID(0x43991002),
+	 PCI_DESCR("AMD SB7x0/SB8x0/SB9x0 USB controller")},
+	{PCI_DEVID(0x06701095),
+	 PCI_DESCR("CMD Tech 670 (USB0670) USB controller")},
+	{PCI_DEVID(0x06731095),
+	 PCI_DESCR("CMD Tech 673 (USB0673) USB controller")},
+	{PCI_DEVID(0xc8611045),
+	 PCI_DESCR("OPTi 82C861 (FireLink) USB controller")},
+	{PCI_DEVID(0x00351033),
+	 PCI_DESCR("NEC uPD 9210 USB controller")},
+	{PCI_DEVID(0x00d710de),
+	 PCI_DESCR("nVidia nForce3 USB Controller")},
+	{PCI_DEVID(0x005a10de),
+	 PCI_DESCR("nVidia nForce CK804 USB Controller")},
+	{PCI_DEVID(0x036c10de),
+	 PCI_DESCR("nVidia nForce MCP55 USB Controller")},
+	{PCI_DEVID(0x03f110de),
+	 PCI_DESCR("nVidia nForce MCP61 USB Controller")},
+	{PCI_DEVID(0x0aa510de),
+	 PCI_DESCR("nVidia nForce MCP79 USB Controller")},
+	{PCI_DEVID(0x0aa710de),
+	 PCI_DESCR("nVidia nForce MCP79 USB Controller")},
+	{PCI_DEVID(0x0aa810de),
+	 PCI_DESCR("nVidia nForce MCP79 USB Controller")},
+	{PCI_DEVID(0x70011039),
+	 PCI_DESCR("SiS 5571 USB controller")},
+	{PCI_DEVID(0x1103108e),
+	 PCI_DESCR("Sun PCIO-2 USB controller")},
+	{PCI_DEVID(0x0019106b),
+	 PCI_DESCR("Apple KeyLargo USB controller")},
+	{PCI_DEVID(0x003f106b),
+	 PCI_DESCR("Apple KeyLargo/Intrepid USB controller")}
+};
+
 static int
 ohci_pci_take_controller(device_t self)
 {
@@ -118,78 +169,18 @@ ohci_pci_take_controller(device_t self)
 static const char *
 ohci_pci_match(device_t self)
 {
-	uint32_t device_id = pci_get_devid(self);
+	const struct pci_device_table *ohcid;
 
-	switch (device_id) {
-	case 0x523710b9:
-		return ("AcerLabs M5237 (Aladdin-V) USB controller");
-
-	case 0x740c1022:
-		return ("AMD-756 USB Controller");
-	case 0x74141022:
-		return ("AMD-766 USB Controller");
-	case 0x78071022:
-		return ("AMD FCH USB Controller");
-
-	case 0x43741002:
-		return "ATI SB400 USB Controller";
-	case 0x43751002:
-		return "ATI SB400 USB Controller";
-	case 0x43971002:
-		return ("AMD SB7x0/SB8x0/SB9x0 USB controller");
-	case 0x43981002:
-		return ("AMD SB7x0/SB8x0/SB9x0 USB controller");
-	case 0x43991002:
-		return ("AMD SB7x0/SB8x0/SB9x0 USB controller");
-
-	case 0x06701095:
-		return ("CMD Tech 670 (USB0670) USB controller");
-
-	case 0x06731095:
-		return ("CMD Tech 673 (USB0673) USB controller");
-
-	case 0xc8611045:
-		return ("OPTi 82C861 (FireLink) USB controller");
-
-	case 0x00351033:
-		return ("NEC uPD 9210 USB controller");
-
-	case 0x00d710de:
-		return ("nVidia nForce3 USB Controller");
-
-	case 0x005a10de:
-		return ("nVidia nForce CK804 USB Controller");
-	case 0x036c10de:
-		return ("nVidia nForce MCP55 USB Controller");
-	case 0x03f110de:
-		return ("nVidia nForce MCP61 USB Controller");
-	case 0x0aa510de:
-		return ("nVidia nForce MCP79 USB Controller");
-	case 0x0aa710de:
-		return ("nVidia nForce MCP79 USB Controller");
-	case 0x0aa810de:
-		return ("nVidia nForce MCP79 USB Controller");
-
-	case 0x70011039:
-		return ("SiS 5571 USB controller");
-
-	case 0x1103108e:
-		return "Sun PCIO-2 USB controller";
-
-	case 0x0019106b:
-		return ("Apple KeyLargo USB controller");
-	case 0x003f106b:
-		return ("Apple KeyLargo/Intrepid USB controller");
-
-	default:
-		break;
+	ohcid = PCI_MATCH(self, ohci_devs);
+	if (ohcid == NULL) {
+		if ((pci_get_class(self) == PCIC_SERIALBUS) &&
+		    (pci_get_subclass(self) == PCIS_SERIALBUS_USB) &&
+		    (pci_get_progif(self) == PCI_INTERFACE_OHCI))
+			return ("OHCI (generic) USB controller");
+		else
+			return (NULL);
 	}
-	if ((pci_get_class(self) == PCIC_SERIALBUS) &&
-	    (pci_get_subclass(self) == PCIS_SERIALBUS_USB) &&
-	    (pci_get_progif(self) == PCI_INTERFACE_OHCI)) {
-		return ("OHCI (generic) USB controller");
-	}
-	return (NULL);
+	return (ohcid->descr);
 }
 
 static int
@@ -200,9 +191,8 @@ ohci_pci_probe(device_t self)
 	if (desc) {
 		device_set_desc(self, desc);
 		return (0);
-	} else {
+	} else
 		return (ENXIO);
-	}
 }
 
 static int
@@ -394,4 +384,5 @@ static driver_t ohci_driver = {
 static devclass_t ohci_devclass;
 
 DRIVER_MODULE(ohci, pci, ohci_driver, ohci_devclass, 0, 0);
+PCI_PNP_INFO(ohci_devs);
 MODULE_DEPEND(ohci, usb, 1, 1, 1);
