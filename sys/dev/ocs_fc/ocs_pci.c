@@ -73,6 +73,15 @@ static int32_t ocs_setup_fcports(ocs_t *ocs);
 
 ocs_t *ocs_devices[MAX_OCS_DEVICES];
 
+struct pci_device_table ocs_devs[] = {
+	{PCI_DEV(PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_OCE16001),
+	 PCI_DESCR("Emulex LightPulse FC Adapter")},
+	{PCI_DEV(PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LPE31004),
+	 PCI_DESCR("Emulex LightPulse FC Adapter")},
+	{PCI_DEV(PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_OCE50102),
+	 PCI_DESCR("Emulex LightPulse 10GbE FCoE/NIC Adapter")}
+};
+
 /**
  * @brief Check support for the given device
  *
@@ -86,29 +95,13 @@ ocs_t *ocs_devices[MAX_OCS_DEVICES];
 static int
 ocs_pci_probe(device_t dev)
 {
-	char	*desc = NULL;
+	const struct pci_device_table *ocsd;
 
-	if (pci_get_vendor(dev) != PCI_VENDOR_EMULEX) { 
-		return ENXIO;
-	}
-
-	switch (pci_get_device(dev)) {
-	case PCI_PRODUCT_EMULEX_OCE16001:
-		desc = "Emulex LightPulse FC Adapter";
-		break;
-	case PCI_PRODUCT_EMULEX_LPE31004:
-		desc = "Emulex LightPulse FC Adapter";
-		break;
-	case PCI_PRODUCT_EMULEX_OCE50102:
-		desc = "Emulex LightPulse 10GbE FCoE/NIC Adapter";
-		break;
-	default:
-		return ENXIO;
-	}
-
-	device_set_desc(dev, desc);
-
-	return BUS_PROBE_DEFAULT;
+	ocsd = PCI_MATCH(dev, ocs_devs);
+	if (ocsd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ocsd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -959,5 +952,6 @@ static driver_t ocs_driver = {
 static devclass_t ocs_devclass;
 
 DRIVER_MODULE(ocs_fc, pci, ocs_driver, ocs_devclass, 0, 0);
+PCI_PNP_INFO(ocs_devs);
 MODULE_VERSION(ocs_fc, 1);
 
