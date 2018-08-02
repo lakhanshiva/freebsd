@@ -731,6 +731,11 @@ DRIVER_MODULE(pcibus_pnp, isa, pcibus_pnp_driver, pcibus_pnp_devclass, 0, 0);
  */
 static int	pcibios_pcib_probe(device_t bus);
 
+struct pci_device_table pcibios_pci_devs[] = {
+	{PCI_CLASS(PCIC_BRIDGE), PCI_SUBCLASS(PCIS_BRIDGE_PCI),
+	 PCI_DESCR("PCIBIOS PCI-PCI bridge")}
+};
+
 static device_method_t pcibios_pcib_pci_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		pcibios_pcib_probe),
@@ -743,25 +748,28 @@ static device_method_t pcibios_pcib_pci_methods[] = {
 
 static devclass_t pcib_devclass;
 
-DEFINE_CLASS_1(pcib, pcibios_pcib_driver, pcibios_pcib_pci_methods,
-    sizeof(struct pcib_softc), pcib_driver);
-DRIVER_MODULE(pcibios_pcib, pci, pcibios_pcib_driver, pcib_devclass, 0, 0);
-ISA_PNP_INFO(pcibus_pnp_ids);
 
 static int
 pcibios_pcib_probe(device_t dev)
 {
 	int bus;
+	const struct pci_device_table *pcibid;
 
-	if ((pci_get_class(dev) != PCIC_BRIDGE) ||
-	    (pci_get_subclass(dev) != PCIS_BRIDGE_PCI))
+	pcibid = PCI_MATCH(dev, pcibios_pci_devs);
+	if (pcibid == NULL)
 		return (ENXIO);
 	bus = pci_read_config(dev, PCIR_SECBUS_1, 1);
 	if (bus == 0)
 		return (ENXIO);
 	if (!pci_pir_probe(bus, 1))
 		return (ENXIO);
-	device_set_desc(dev, "PCIBIOS PCI-PCI bridge");
+	device_set_desc(dev, pcibid->descr);
 	return (-2000);
 }
+
+DEFINE_CLASS_1(pcib, pcibios_pcib_driver, pcibios_pcib_pci_methods,
+    sizeof(struct pcib_softc), pcib_driver);
+DRIVER_MODULE(pcibios_pcib, pci, pcibios_pcib_driver, pcib_devclass, 0, 0);
+PCI_PNP_INFO(pcibios_pci_devs);
+ISA_PNP_INFO(pcibus_pnp_ids);
 #endif
