@@ -81,6 +81,11 @@ static void		pcib_pcie_dll_timeout(void *arg);
 static int		pcib_request_feature_default(device_t pcib, device_t dev,
 			    enum pci_feature feature);
 
+struct pci_device_table pcib_devs[] = {
+	{PCI_CLASS(PCIC_BRIDGE), PCI_SUBCLASS(PCIS_BRIDGE_PCI),
+	 PCI_DESCR("PCI-PCI bridge")}
+};
+
 static device_method_t pcib_methods[] = {
     /* Device interface */
     DEVMETHOD(device_probe,		pcib_probe),
@@ -132,6 +137,7 @@ static devclass_t pcib_devclass;
 
 DEFINE_CLASS_0(pcib, pcib_driver, pcib_methods, sizeof(struct pcib_softc));
 DRIVER_MODULE(pcib, pci, pcib_driver, pcib_devclass, NULL, NULL);
+PCI_PNP_INFO(pcib_devs);
 
 #if defined(NEW_PCIB) || defined(PCI_HP)
 SYSCTL_DECL(_hw_pci);
@@ -1503,12 +1509,13 @@ pcib_cfg_restore(struct pcib_softc *sc)
 static int
 pcib_probe(device_t dev)
 {
-    if ((pci_get_class(dev) == PCIC_BRIDGE) &&
-	(pci_get_subclass(dev) == PCIS_BRIDGE_PCI)) {
-	device_set_desc(dev, "PCI-PCI bridge");
-	return(-10000);
-    }
-    return(ENXIO);
+	const struct pci_device_table *pcibd;
+
+	pcibd = PCI_MATCH(dev, pcib_devs);
+	if (pcibd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, pcibd->descr);
+	return (-10000);
 }
 
 void
