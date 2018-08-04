@@ -176,29 +176,29 @@ TUNABLE_INT("hw.re.prefer_iomap", &prefer_iomap);
 /*
  * Various supported device vendors/types and their names.
  */
-static const struct rl_type re_devs[] = {
-	{ DLINK_VENDORID, DLINK_DEVICEID_528T, 0,
-	    "D-Link DGE-528(T) Gigabit Ethernet Adapter" },
-	{ DLINK_VENDORID, DLINK_DEVICEID_530T_REVC, 0,
-	    "D-Link DGE-530(T) Gigabit Ethernet Adapter" },
-	{ RT_VENDORID, RT_DEVICEID_8139, 0,
-	    "RealTek 8139C+ 10/100BaseTX" },
-	{ RT_VENDORID, RT_DEVICEID_8101E, 0,
-	    "RealTek 810xE PCIe 10/100baseTX" },
-	{ RT_VENDORID, RT_DEVICEID_8168, 0,
-	    "RealTek 8168/8111 B/C/CP/D/DP/E/F/G PCIe Gigabit Ethernet" },
-	{ NCUBE_VENDORID, RT_DEVICEID_8168, 0,
-	    "TP-Link TG-3468 v2 (RTL8168) Gigabit Ethernet" },
-	{ RT_VENDORID, RT_DEVICEID_8169, 0,
-	    "RealTek 8169/8169S/8169SB(L)/8110S/8110SB(L) Gigabit Ethernet" },
-	{ RT_VENDORID, RT_DEVICEID_8169SC, 0,
-	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
-	{ COREGA_VENDORID, COREGA_DEVICEID_CGLAPCIGT, 0,
-	    "Corega CG-LAPCIGT (RTL8169S) Gigabit Ethernet" },
-	{ LINKSYS_VENDORID, LINKSYS_DEVICEID_EG1032, 0,
-	    "Linksys EG1032 (RTL8169S) Gigabit Ethernet" },
-	{ USR_VENDORID, USR_DEVICEID_997902, 0,
-	    "US Robotics 997902 (RTL8169S) Gigabit Ethernet" }
+struct pci_device_table re_devs[] = {
+	{PCI_DEV(DLINK_VENDORID, DLINK_DEVICEID_528T),
+	 PCI_DESCR("D-Link DGE-528(T) Gigabit Ethernet Adapter"), .driver_data = 0},
+	{PCI_DEV(DLINK_VENDORID, DLINK_DEVICEID_530T_REVC),
+	 PCI_DESCR("D-Link DGE-530(T) Gigabit Ethernet Adapter"), .driver_data = 0},
+	{PCI_DEV(RT_VENDORID, RT_DEVICEID_8139),
+	 PCI_DESCR("RealTek 8139C+ 10/100BaseTX"), .driver_data = 0},
+	{PCI_DEV(RT_VENDORID, RT_DEVICEID_8101E),
+	 PCI_DESCR("RealTek 810xE PCIe 10/100baseTX"), .driver_data = 0},
+	{PCI_DEV(RT_VENDORID, RT_DEVICEID_8168),
+	 PCI_DESCR("RealTek 8168/8111 B/C/CP/D/DP/E/F/G PCIe Gigabit Ethernet"), .driver_data = 0},
+	{PCI_DEV(NCUBE_VENDORID, RT_DEVICEID_8168),
+	 PCI_DESCR("TP-Link TG-3468 v2 (RTL8168) Gigabit Ethernet"), .driver_data = 0},
+	{PCI_DEV(RT_VENDORID, RT_DEVICEID_8169),
+	 PCI_DESCR("RealTek 8169/8169S/8169SB(L)/8110S/8110SB(L) Gigabit Ethernet"), .driver_data = 0},
+	{PCI_DEV(RT_VENDORID, RT_DEVICEID_8169SC),
+	 PCI_DESCR("RealTek 8169SC/8110SC Single-chip Gigabit Ethernet"), .driver_data = 0},
+	{PCI_DEV(COREGA_VENDORID, COREGA_DEVICEID_CGLAPCIGT),
+	 PCI_DESCR("Corega CG-LAPCIGT (RTL8169S) Gigabit Ethernet"), .driver_data = 0},
+	{PCI_DEV(LINKSYS_VENDORID, LINKSYS_DEVICEID_EG1032),
+	 PCI_DESCR("Linksys EG1032 (RTL8169S) Gigabit Ethernet"), .driver_data = 0},
+	{PCI_DEV(USR_VENDORID, USR_DEVICEID_997902),
+	 PCI_DESCR("US Robotics 997902 (RTL8169S) Gigabit Ethernet"), .driver_data = 0}
 };
 
 static const struct rl_hwrev re_hwrevs[] = {
@@ -352,6 +352,7 @@ static driver_t re_driver = {
 static devclass_t re_devclass;
 
 DRIVER_MODULE(re, pci, re_driver, re_devclass, 0, 0);
+PCI_PNP_INFO(re_devs);
 DRIVER_MODULE(miibus, re, miibus_driver, miibus_devclass, 0, 0);
 
 #define EE_SET(x)					\
@@ -934,10 +935,9 @@ done:
 static int
 re_probe(device_t dev)
 {
-	const struct rl_type	*t;
+	const struct pci_device_table *red;
 	uint16_t		devid, vendor;
 	uint16_t		revid, sdevid;
-	int			i;
 
 	vendor = pci_get_vendor(dev);
 	devid = pci_get_device(dev);
@@ -960,16 +960,12 @@ re_probe(device_t dev)
 			return (ENXIO);
 		}
 	}
-
-	t = re_devs;
-	for (i = 0; i < nitems(re_devs); i++, t++) {
-		if (vendor == t->rl_vid && devid == t->rl_did) {
-			device_set_desc(dev, t->rl_name);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-
-	return (ENXIO);
+	
+	red = PCI_MATCH(dev, re_devs);
+	if (red == NULL)
+		return (ENXIO);
+	device_set_desc(dev, red->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 /*
