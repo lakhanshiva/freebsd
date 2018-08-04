@@ -55,6 +55,11 @@ static unsigned piix_get_timecount(struct timecounter *tc);
 static u_int32_t piix_timecounter_address;
 static u_int piix_freq = 14318182/4;
 
+struct pci_device_table piix_devs[] = {
+	{PCI_DEVID(0x71138086),
+	 PCI_DESCR("PIIX Timecounter")}
+};
+
 static struct timecounter piix_timecounter = {
 	piix_get_timecount,	/* get_timecount */
 	0,			/* no poll_pps */
@@ -103,16 +108,14 @@ static int
 piix_probe(device_t dev)
 {
 	u_int32_t d;
+	const struct pci_device_table *piid;
 
 	if (devclass_get_device(devclass_find("acpi"), 0) != NULL)
 		return (ENXIO);
-	switch (pci_get_devid(dev)) {
-	case 0x71138086:
-		device_set_desc(dev, "PIIX Timecounter");
-		break;
-	default:
+	piid = PCI_MATCH(dev, piix_devs);
+	if (piid == NULL)
 		return (ENXIO);
-	}
+	device_set_desc(dev, piid->descr);
 
 	d = pci_read_config(dev, PCIR_COMMAND, 2);
 	if (!(d & PCIM_CMD_PORTEN)) {
@@ -150,3 +153,5 @@ static driver_t piix_driver = {
 static devclass_t piix_devclass;
 
 DRIVER_MODULE(piix, pci, piix_driver, piix_devclass, 0, 0);
+PCI_PNP_INFO(piix_devs);
+
