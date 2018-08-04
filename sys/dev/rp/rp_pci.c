@@ -123,6 +123,11 @@ static rp_aiop2rid_t rp_pci_aiop2rid;
 static rp_aiop2off_t rp_pci_aiop2off;
 static rp_ctlmask_t rp_pci_ctlmask;
 
+struct pci_device_table rp_devs[] = {
+	{PCI_VID(RP_VENDOR_ID),
+	 PCI_DESCR("RocketPort PCI")}
+};
+
 /*
  * The following functions are the pci-specific part
  * of rp driver.
@@ -131,18 +136,13 @@ static rp_ctlmask_t rp_pci_ctlmask;
 static int
 rp_pciprobe(device_t dev)
 {
-	char *s;
+	const struct pci_device_table *rpd;
 
-	s = NULL;
-	if (pci_get_vendor(dev) == RP_VENDOR_ID)
-		s = "RocketPort PCI";
-
-	if (s != NULL) {
-		device_set_desc(dev, s);
-		return (BUS_PROBE_DEFAULT);
-	}
-
-	return (ENXIO);
+	rpd = PCI_MATCH(dev, rp_devs);
+	if (rpd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, rpd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -365,3 +365,5 @@ static driver_t rp_pcidriver = {
  * rp can be attached to a pci bus.
  */
 DRIVER_MODULE(rp, pci, rp_pcidriver, rp_devclass, 0, 0);
+PCI_PNP_INFO(rp_devs);
+
