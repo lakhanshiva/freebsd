@@ -352,6 +352,8 @@ static driver_t re_driver = {
 static devclass_t re_devclass;
 
 DRIVER_MODULE(re, pci, re_driver, re_devclass, 0, 0);
+MODULE_PNP_INFO("U16:vendor; U16:device", pci, re, re_devs,
+    sizeof(re_devs[0]), nitems(re_devs) - 1);
 DRIVER_MODULE(miibus, re, miibus_driver, miibus_devclass, 0, 0);
 
 #define EE_SET(x)					\
