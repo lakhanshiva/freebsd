@@ -301,6 +301,8 @@ struct pci_device_table {
 	.match_flag_subdevice = 1, .subdevice = (sd)
 #define PCI_DEVID(did)							\
 	PCI_DEV((uint16_t)did, (uint16_t)(did >> 16))
+#define	PCI_SUBVID(sv)							\
+	.match_flag_subvendor = 1, .subvendor = (sv)
 #define	PCI_CLASS(x)							\
 	.match_flag_class = 1, .class_id = (x)
 #define	PCI_SUBCLASS(x)							\
