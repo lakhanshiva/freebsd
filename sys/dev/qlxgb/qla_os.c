@@ -90,6 +90,11 @@ static int qla_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
 static int qla_media_change(struct ifnet *ifp);
 static void qla_media_status(struct ifnet *ifp, struct ifmediareq *ifmr);
 
+struct pci_device_table qla_pci_devs[] = {
+	{PCI_DEVID(PCI_QLOGIC_ISP8020),
+	 PCI_DESCR("Qlogic ISP 80xx PCI CNA Adapter-Ethernet Function")}
+};
+
 static device_method_t qla_pci_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe, qla_pci_probe),
@@ -105,6 +110,7 @@ static driver_t qla_pci_driver = {
 static devclass_t qla80xx_devclass;
 
 DRIVER_MODULE(qla80xx, pci, qla_pci_driver, qla80xx_devclass, 0, 0);
+PCI_PNP_INFO(qla_pci_devs);
 
 MODULE_DEPEND(qla80xx, pci, 1, 1, 1);
 MODULE_DEPEND(qla80xx, ether, 1, 1, 1);
@@ -127,22 +133,20 @@ static char dev_str[64];
 static int
 qla_pci_probe(device_t dev)
 {
-        switch ((pci_get_device(dev) << 16) | (pci_get_vendor(dev))) {
-        case PCI_QLOGIC_ISP8020:
-		snprintf(dev_str, sizeof(dev_str), "%s v%d.%d.%d",
-			"Qlogic ISP 80xx PCI CNA Adapter-Ethernet Function",
-			QLA_VERSION_MAJOR, QLA_VERSION_MINOR,
-			QLA_VERSION_BUILD);
-                device_set_desc(dev, dev_str);
-                break;
-        default:
-                return (ENXIO);
-        }
+	const struct pci_device_table *qlad;
+	qlad = PCI_MATCH(dev, qla_pci_devs);
+	if (qlad == NULL)
+		return (ENXIO);
+	snprintf(dev_str, sizeof(dev_str), "%s v%d.%d.%d",
+		qlad->descr,
+		QLA_VERSION_MAJOR, QLA_VERSION_MINOR,
+		QLA_VERSION_BUILD);
+	device_set_desc(dev, dev_str);
 
-        if (bootverbose)
-                printf("%s: %s\n ", __func__, dev_str);
+	if (bootverbose)
+		printf("%s: %s\n ", __func__, dev_str);
 
-        return (BUS_PROBE_DEFAULT);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static void

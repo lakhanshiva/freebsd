@@ -123,13 +123,15 @@ struct iwi_ident {
 	const char	*name;
 };
 
-static const struct iwi_ident iwi_ident_table[] = {
-	{ 0x8086, 0x4220, "Intel(R) PRO/Wireless 2200BG" },
-	{ 0x8086, 0x4221, "Intel(R) PRO/Wireless 2225BG" },
-	{ 0x8086, 0x4223, "Intel(R) PRO/Wireless 2915ABG" },
-	{ 0x8086, 0x4224, "Intel(R) PRO/Wireless 2915ABG" },
-
-	{ 0, 0, NULL }
+struct pci_device_table iwi_devs[] = {
+	{PCI_DEV(0x8086, 0x4220),
+	 PCI_DESCR("Intel(R) PRO/Wireless 2200BG")},
+	{PCI_DEV(0x8086, 0x4221),
+	 PCI_DESCR("Intel(R) PRO/Wireless 2225BG")},
+	{PCI_DEV(0x8086, 0x4223),
+	 PCI_DESCR("Intel(R) PRO/Wireless 2915ABG")},
+	{PCI_DEV(0x8086, 0x4224),
+	 PCI_DESCR("Intel(R) PRO/Wireless 2915ABG")}
 };
 
 static const uint8_t def_chan_2ghz[] =
@@ -247,6 +249,7 @@ static driver_t iwi_driver = {
 static devclass_t iwi_devclass;
 
 DRIVER_MODULE(iwi, pci, iwi_driver, iwi_devclass, NULL, NULL);
+PCI_PNP_INFO(iwi_devs);
 
 MODULE_VERSION(iwi, 1);
 
@@ -267,16 +270,13 @@ MEM_READ_4(struct iwi_softc *sc, uint32_t addr)
 static int
 iwi_probe(device_t dev)
 {
-	const struct iwi_ident *ident;
+	const struct pci_device_table *iwid;
 
-	for (ident = iwi_ident_table; ident->name != NULL; ident++) {
-		if (pci_get_vendor(dev) == ident->vendor &&
-		    pci_get_device(dev) == ident->device) {
-			device_set_desc(dev, ident->name);
-			return (BUS_PROBE_DEFAULT);
-		}
-	}
-	return ENXIO;
+	iwid = PCI_MATCH(dev, iwi_devs);
+	if (iwid == NULL)
+		return (ENXIO);
+	device_set_desc(dev, iwid->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int

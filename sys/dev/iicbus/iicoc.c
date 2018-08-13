@@ -68,6 +68,11 @@ static int iicoc_write(device_t dev, const char *buf,
     int len, int *sent, int timeout);
 static int iicoc_repeated_start(device_t dev, u_char slave, int timeout);
 
+struct pci_device_table iicoc_devs[] = {
+	{PCI_DEV(0x184e, 0x1011),
+	 PCI_DESCR("Netlogic XLP I2C Controller")}
+}
+
 struct iicoc_softc {
 	device_t 	dev;		/* Self */
 	u_int		reg_shift;	/* Chip specific */
@@ -179,17 +184,17 @@ static int
 iicoc_probe(device_t dev)
 {
 	struct iicoc_softc *sc;
-	
+	const struct pci_device_table *iicd;
+
 	sc = device_get_softc(dev);
-	if ((pci_get_vendor(dev) == 0x184e) &&
-	    (pci_get_device(dev) == 0x1011)) {
-		sc->clockfreq = XLP_I2C_CLKFREQ;
-		sc->i2cfreq = XLP_I2C_FREQ;
-		sc->reg_shift = 2;
-		device_set_desc(dev, "Netlogic XLP I2C Controller");
-		return (BUS_PROBE_DEFAULT);
-	}
-	return (ENXIO);
+	iicd = PCI_MATCH(dev, iicoc_devs);
+	if (iicd == NULL)
+		return (ENXIO);
+	sc->clockfreq = XLP_I2C_CLKFREQ;
+	sc->i2cfreq = XLP_I2C_FREQ;
+	sc->reg_shift = 2;
+	device_set_desc(dev, iicd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 
@@ -390,4 +395,5 @@ static driver_t iicoc_driver = {
 };
 
 DRIVER_MODULE(iicoc, pci, iicoc_driver, iicoc_devclass, 0, 0);
+PCI_PNP_INFO(iicoc_devs);
 DRIVER_MODULE(iicbus, iicoc, iicbus_driver, iicbus_devclass, 0, 0);

@@ -73,6 +73,8 @@ SYSCTL_INT(_debug, OID_AUTO, mn_maxlatency, CTLFLAG_RW,
 #define NMN	4
 #endif
 
+#define SIEMENS_VENDOR_ID	0x110a
+
 /* From: PEB 20321 data sheet, p187, table 22 */
 struct m32xreg {
 	u_int32_t conf,    cmd,     stat,    imask;
@@ -189,6 +191,11 @@ static	ng_newhook_t ngmn_newhook;
 static	ng_connect_t ngmn_connect;
 static	ng_rcvdata_t ngmn_rcvdata;
 static	ng_disconnect_t ngmn_disconnect;
+
+struct pci_device_table mn_devs[] = {
+	{PCI_DEV(SIEMENS_VENDOR_ID, 0x2101),
+	 PCI_DESCR("Munich32X E1/T1 HDLC Controller")}
+};
 
 static struct ng_type mntypestruct = {
 	.version =	NG_ABI_VERSION,
@@ -1262,7 +1269,7 @@ mn_intr(void *xsc)
 static int
 mn_probe (device_t self)
 {
-	u_int id = pci_get_devid(self);
+	const struct pci_device_table *mnd;
 
 	if (sizeof (struct m32xreg) != 256) {
 		printf("MN: sizeof(struct m32xreg) = %zd, should have been 256\n", sizeof (struct m32xreg));
@@ -1277,10 +1284,10 @@ mn_probe (device_t self)
 		return (ENXIO);
 	}
 
-	if (id != 0x2101110a) 
+	mnd = PCI_MATCH(self, mn_devs);
+	if (mnd == NULL)
 		return (ENXIO);
-
-	device_set_desc_copy(self, "Munich32X E1/T1 HDLC Controller");
+	device_set_desc_copy(self, mnd->descr);
 	return (BUS_PROBE_DEFAULT);
 }
 
@@ -1431,3 +1438,5 @@ static driver_t mn_driver = {
 static devclass_t mn_devclass;
 
 DRIVER_MODULE(mn, pci, mn_driver, mn_devclass, 0, 0);
+PCI_PNP_INFO(mn_devs);
+

@@ -54,6 +54,7 @@ __FBSDID("$FreeBSD$");
 #include <dev/isci/scil/scif_library.h>
 #include <dev/isci/scil/scif_logger.h>
 #include <dev/isci/scil/scif_user_callback.h>
+#define INTEL_VENDOR_ID 0x8086
 
 MALLOC_DEFINE(M_ISCI, "isci", "isci driver memory allocations");
 
@@ -85,49 +86,55 @@ static driver_t isci_pci_driver = {
 	 sizeof(struct isci_softc),
 };
 
-DRIVER_MODULE(isci, pci, isci_pci_driver, isci_devclass, 0, 0);
-MODULE_DEPEND(isci, cam, 1, 1, 1);
-
-static struct _pcsid
-{
-	 u_int32_t	type;
-	 const char	*desc;
-} pci_ids[] = {
-	 { 0x1d608086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d618086,	"Intel(R) C600 Series Chipset SAS Controller (SATA mode)"  },
-	 { 0x1d628086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d638086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d648086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d658086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d668086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d678086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d688086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d698086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d6a8086,	"Intel(R) C600 Series Chipset SAS Controller (SATA mode)"  },
-	 { 0x1d6b8086,  "Intel(R) C600 Series Chipset SAS Controller (SATA mode)"  },
-	 { 0x1d6c8086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d6d8086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d6e8086,	"Intel(R) C600 Series Chipset SAS Controller"  },
-	 { 0x1d6f8086,	"Intel(R) C600 Series Chipset SAS Controller (SATA mode)"  },
-	 { 0x00000000,	NULL				}
+struct pci_device_table isci_devs[] = {
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d60),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d61),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller (SATA mode)")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d62),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d63),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d64),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d65),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d66),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d67),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d68),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d69),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d6a),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller (SATA mode)")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d6b),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller (SATA mode)")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d6c),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d6d),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d6e),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller")},
+	 {PCI_DEV(INTEL_VENDOR_ID, 0x1d6f),
+	  PCI_DESCR("Intel(R) C600 Series Chipset SAS Controller (SATA mode)")}
 };
 
+DRIVER_MODULE(isci, pci, isci_pci_driver, isci_devclass, 0, 0);
+PCI_PNP_INFO(isci_devs);
+MODULE_DEPEND(isci, cam, 1, 1, 1);
+
 static int
-isci_probe (device_t device)
+isci_probe (device_t dev)
 {
-	u_int32_t	type = pci_get_devid(device);
-	struct _pcsid	*ep = pci_ids;
+	const struct pci_device_table *iscd;
 
-	while (ep->type && ep->type != type)
-		++ep;
-
-	if (ep->desc)
-	{
-		device_set_desc(device, ep->desc);
-		return (BUS_PROBE_DEFAULT);
-	}
-	else
+	iscd = PCI_MATCH(dev, isci_devs);
+	if (iscd == NULL)
 		return (ENXIO);
+	device_set_desc(dev, iscd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int

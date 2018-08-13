@@ -133,6 +133,21 @@ static device_method_t mxge_methods[] =
   DEVMETHOD_END
 };
 
+struct pci_device_table mxge_devs[] = {
+	{PCI_DEV(MXGE_PCI_VENDOR_MYRICOM, MXGE_PCI_DEVICE_Z8E),
+	 PCI_REVID(MXGE_PCI_REV_Z8E), PCI_DESCR("Myri10G-PCIE-8A")},
+	{PCI_DEV(MXGE_PCI_VENDOR_MYRICOM, MXGE_PCI_DEVICE_Z8E),
+	 PCI_REVID(MXGE_PCI_REV_Z8ES), PCI_DESCR("Myri10G-PCIE-8B")},
+	{PCI_DEV(MXGE_PCI_VENDOR_MYRICOM, MXGE_PCI_DEVICE_Z8E_9),
+	 PCI_REVID(MXGE_PCI_REV_Z8E), PCI_DESCR("Myri10G-PCIE-8A")},
+	{PCI_DEV(MXGE_PCI_VENDOR_MYRICOM, MXGE_PCI_DEVICE_Z8E_9),
+	 PCI_REVID(MXGE_PCI_REV_Z8ES), PCI_DESCR("Myri10G-PCIE-8B")},
+	{PCI_DEV(MXGE_PCI_VENDOR_MYRICOM, MXGE_PCI_DEVICE_Z8E),
+	 PCI_DESCR("Myri10G-PCIE-8??")},
+	{PCI_DEV(MXGE_PCI_VENDOR_MYRICOM, MXGE_PCI_DEVICE_Z8E_9),
+	 PCI_DESCR("Myri10G-PCIE-8??")},
+}
+
 static driver_t mxge_driver =
 {
   "mxge",
@@ -144,6 +159,7 @@ static devclass_t mxge_devclass;
 
 /* Declare ourselves to be a child of the PCI bus.*/
 DRIVER_MODULE(mxge, pci, mxge_driver, mxge_devclass, 0, 0);
+PCI_PNP_INFO(mxge_devs);
 MODULE_DEPEND(mxge, firmware, 1, 1, 1);
 MODULE_DEPEND(mxge, zlib, 1, 1, 1);
 
@@ -156,29 +172,18 @@ static void mxge_tick(void *arg);
 static int
 mxge_probe(device_t dev)
 {
+	const struct pci_device_table *mxgd;
 	int rev;
 
-
-	if ((pci_get_vendor(dev) == MXGE_PCI_VENDOR_MYRICOM) &&
-	    ((pci_get_device(dev) == MXGE_PCI_DEVICE_Z8E) ||
-	     (pci_get_device(dev) == MXGE_PCI_DEVICE_Z8E_9))) {
-		rev = pci_get_revid(dev);
-		switch (rev) {
-		case MXGE_PCI_REV_Z8E:
-			device_set_desc(dev, "Myri10G-PCIE-8A");
-			break;
-		case MXGE_PCI_REV_Z8ES:
-			device_set_desc(dev, "Myri10G-PCIE-8B");
-			break;
-		default:
-			device_set_desc(dev, "Myri10G-PCIE-8??");
-			device_printf(dev, "Unrecognized rev %d NIC\n",
-				      rev);
-			break;	
-		}
-		return 0;
-	}
-	return ENXIO;
+	mxgd = PCI_MATCH(dev, mxge_devs);
+	if (mxgd == NULL)
+		return (ENXIO);
+	rev = pci_get_revid(dev);
+	device_set_desc(dev, mxgd->descr);
+	if !(rev ==  MXGE_PCI_REV_Z8E || MXGE_PCI_REV_Z8ES)
+		device_printf(dev, "Unrecognized rev %d NIC\n",
+			      rev);
+	return 0;
 }
 
 static void

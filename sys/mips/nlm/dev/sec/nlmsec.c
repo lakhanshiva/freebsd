@@ -87,6 +87,10 @@ static	int xlp_sec_probe(device_t);
 static	int xlp_sec_attach(device_t);
 static	int xlp_sec_detach(device_t);
 
+struct pci_device_table xlp_sec_devs[] = {
+	{PCI_DEV(PCI_VENDOR_NETLOGIC, PCI_DEVICE_ID_NLM_SAE)}
+};
+
 static device_method_t xlp_sec_methods[] = {
 	/* device interface */
 	DEVMETHOD(device_probe, xlp_sec_probe),
@@ -113,6 +117,7 @@ static driver_t xlp_sec_driver = {
 static devclass_t xlp_sec_devclass;
 
 DRIVER_MODULE(nlmsec, pci, xlp_sec_driver, xlp_sec_devclass, 0, 0);
+PCI_PNP_INFO(xlp_sec_devs);
 MODULE_DEPEND(nlmsec, crypto, 1, 1, 1);
 
 void
@@ -359,13 +364,13 @@ static int
 xlp_sec_probe(device_t dev)
 {
 	struct xlp_sec_softc *sc;
+	const struct pci_device_table *xlpsecd;
 
-	if (pci_get_vendor(dev) == PCI_VENDOR_NETLOGIC &&
-	    pci_get_device(dev) == PCI_DEVICE_ID_NLM_SAE) {
-		sc = device_get_softc(dev);
-		return (BUS_PROBE_DEFAULT);
-	}
-	return (ENXIO);
+	xlpsecd = PCI_MATCH(dev, xlp_sec_devs);
+	if (xlpsecd == NULL)
+		return (ENXIO);
+	sc = device_get_softc(dev);
+	return (BUS_PROBE_DEFAULT);
 }
 
 /*

@@ -83,35 +83,42 @@ struct pci_id {
 	int		rid;
 };
 
-static struct pci_id pci_ids[] = {
-	{ 0x1020131f, "SIIG Cyber Parallel PCI (10x family)", 0x18 },
-	{ 0x2020131f, "SIIG Cyber Parallel PCI (20x family)", 0x10 },
-	{ 0x05111407, "Lava SP BIDIR Parallel PCI", 0x10 },
-	{ 0x80001407, "Lava Computers 2SP-PCI parallel port", 0x10 },
-	{ 0x84031415, "Oxford Semiconductor OX12PCI840 Parallel port", 0x10 },
-	{ 0x95131415, "Oxford Semiconductor OX16PCI954 Parallel port", 0x10 },
-	{ 0xc1101415, "Oxford Semiconductor OXPCIe952 Parallel port", 0x10 },
-	{ 0x98059710, "NetMos NM9805 1284 Printer port", 0x10 },
-	{ 0x98659710, "MosChip MCS9865 1284 Printer port", 0x10 },
-	{ 0x99009710, "MosChip MCS9900 PCIe to Peripheral Controller", 0x10 },
-	{ 0x99019710, "MosChip MCS9901 PCIe to Peripheral Controller", 0x10 },
-	{ 0xffff }
+struct pci_device_table ppc_devs[] = {
+	{PCI_DEVID(0x1020131f), PCI_DESCR("SIIG Cyber Parallel PCI (10x family)"),
+	 .driver_data = 0x18},
+	{PCI_DEVID(0x2020131f), PCI_DESCR("SIIG Cyber Parallel PCI (20x family)"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0x05111407), PCI_DESCR("Lava SP BIDIR Parallel PCI"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0x80001407), PCI_DESCR("Lava Computers 2SP-PCI parallel port"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0x84031415), PCI_DESCR("Oxford Semiconductor OX12PCI840 Parallel port"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0x95131415), PCI_DESCR("Oxford Semiconductor OX16PCI954 Parallel port"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0xc1101415), PCI_DESCR("Oxford Semiconductor OXPCIe952 Parallel port"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0x98059710), PCI_DESCR("NetMos NM9805 1284 Printer port"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0x98659710), PCI_DESCR("MosChip MCS9865 1284 Printer port"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0x99009710), PCI_DESCR("MosChip MCS9900 PCIe to Peripheral Controller"),
+	 .driver_data = 0x10},
+	{PCI_DEVID(0x99019710), PCI_DESCR("MosChip MCS9901 PCIe to Peripheral Controller"),
+	 .driver_data = 0x10},
 };
 
 static int
 ppc_pci_probe(device_t dev)
 {
-	struct pci_id *id;
-	uint32_t type;
+	const struct pci_device_table *ppcd;
 
-	type = pci_get_devid(dev);
-	id = pci_ids;
-	while (id->type != 0xffff && id->type != type)
-		id++;
-	if (id->type == 0xffff)
+	ppcd = PCI_MATCH(dev, ppc_devs)
+	if (ppcd == NULL)
 		return (ENXIO);
-	device_set_desc(dev, id->desc);
-	return (ppc_probe(dev, id->rid));
+	device_set_desc(dev, ppcd->descr);
+	return (ppc_probe(dev, ppcd->driver_data));
 }
 
 DRIVER_MODULE(ppc, pci, ppc_pci_driver, ppc_devclass, 0, 0);
+PCI_PNP_INFO(ppc_devs);

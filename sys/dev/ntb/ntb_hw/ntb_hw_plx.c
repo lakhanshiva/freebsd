@@ -57,6 +57,19 @@ __FBSDID("$FreeBSD$");
 #define PLX_NUM_SPAD_PATT	4	/* Use test pattern as 4 more. */
 #define PLX_NUM_DB		16	/* There are 16 doorbells. */
 
+#define PLX_VENDOR_ID 0x10b5
+
+struct pci_device_table ntb_plx_devs[] = {
+	{PCI_DEV(PLX_VENDOR_ID, 0x87a0),
+	 PCI_DESCR("PLX Non-Transparent Bridge NT0 Link")},
+	{PCI_DEV(PLX_VENDOR_ID, 0x87a1),
+	 PCI_DESCR("PLX Non-Transparent Bridge NT1 Link")},
+	{PCI_DEV(PLX_VENDOR_ID, 0x87b0),
+	 PCI_DESCR("PLX Non-Transparent Bridge NT0 Virtual")},
+	{PCI_DEV(PLX_VENDOR_ID, 0x87b1),
+	 PCI_DESCR("PLX Non-Transparent Bridge NT1 Virtual")}
+};
+
 struct ntb_plx_mw_info {
 	int			 mw_bar;
 	int			 mw_64bit;
@@ -144,22 +157,13 @@ static int ntb_plx_mw_set_trans_internal(device_t dev, unsigned mw_idx);
 static int
 ntb_plx_probe(device_t dev)
 {
+	const struct pci_device_table *ntbplxd;
 
-	switch (pci_get_devid(dev)) {
-	case 0x87a010b5:
-		device_set_desc(dev, "PLX Non-Transparent Bridge NT0 Link");
-		return (BUS_PROBE_DEFAULT);
-	case 0x87a110b5:
-		device_set_desc(dev, "PLX Non-Transparent Bridge NT1 Link");
-		return (BUS_PROBE_DEFAULT);
-	case 0x87b010b5:
-		device_set_desc(dev, "PLX Non-Transparent Bridge NT0 Virtual");
-		return (BUS_PROBE_DEFAULT);
-	case 0x87b110b5:
-		device_set_desc(dev, "PLX Non-Transparent Bridge NT1 Virtual");
-		return (BUS_PROBE_DEFAULT);
-	}
-	return (ENXIO);
+	ntbplxd = PCI_MATCH(dev, ntb_plx_devs);
+	if (ntbplxd == NULL)
+		return (ENXIO);
+	device_set_desc(dev, ntbplxd->descr);
+	return (BUS_PROBE_DEFAULT);
 }
 
 static int
@@ -997,5 +1001,6 @@ static device_method_t ntb_plx_methods[] = {
 static DEFINE_CLASS_0(ntb_hw, ntb_plx_driver, ntb_plx_methods,
     sizeof(struct ntb_plx_softc));
 DRIVER_MODULE(ntb_hw_plx, pci, ntb_plx_driver, ntb_hw_devclass, NULL, NULL);
+PCI_PNP_INFO(ntb_plx_devs);
 MODULE_DEPEND(ntb_hw_plx, ntb, 1, 1, 1);
 MODULE_VERSION(ntb_hw_plx, 1);

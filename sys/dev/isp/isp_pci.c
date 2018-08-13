@@ -304,6 +304,58 @@ static struct ispmdvec mdvec_2700 = {
 #define	PCI_DFLT_LTNCY	0x40
 #define	PCI_DFLT_LNSZ	0x10
 
+struct pci_device_table isp_devs[] = {
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020),
+	PCI_DESCR("Qlogic ISP 1020/1040 PCI SCSI Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1080),
+	PCI_DESCR("Qlogic ISP 1080 PCI SCSI Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1240),
+	PCI_DESCR("Qlogic ISP 1240 PCI SCSI Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1280),
+	PCI_DESCR("Qlogic ISP 1280 PCI SCSI Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP10160),
+	PCI_DESCR("Qlogic ISP 10160 PCI SCSI Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP12160),
+	PCI_DESCR("Qlogic ISP 12160 PCI SCSI Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1280),
+	PCI_DESCR("Qlogic ISP 1280 PCI SCSI Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2100),
+	PCI_DESCR("Qlogic ISP 2100 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2200),
+	PCI_DESCR("Qlogic ISP 2200 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2300),
+	PCI_DESCR("Qlogic ISP 2300 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2312),
+	PCI_DESCR("Qlogic ISP 2312 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2322),
+	PCI_DESCR("Qlogic ISP 2322 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2422),
+	PCI_DESCR("Qlogic ISP 2422 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2432),
+	PCI_DESCR("Qlogic ISP 2432 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2532),
+	PCI_DESCR("Qlogic ISP 2532 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP5432),
+	PCI_DESCR("Qlogic ISP 5432 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP6312),
+	PCI_DESCR("Qlogic ISP 6312 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP6322),
+	PCI_DESCR("Qlogic ISP 6322 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2031),
+	PCI_DESCR("Qlogic ISP 2031 PCI FC-AL Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP8031),
+	PCI_DESCR("Qlogic ISP 8031 PCI FCoE Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2684),
+	PCI_DESCR("Qlogic ISP 2684 PCI FC Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2692),
+	PCI_DESCR("Qlogic ISP 2692 PCI FC Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2714),
+	PCI_DESCR("Qlogic ISP 2714 PCI FC Adapter")},
+	{PCI_DEV(PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2722),
+	PCI_DESCR("Qlogic ISP 2722 PCI FC Adapter")}
+	
+};
+
 static int isp_pci_probe (device_t);
 static int isp_pci_attach (device_t);
 static int isp_pci_detach (device_t);
@@ -346,6 +398,7 @@ static driver_t isp_pci_driver = {
 };
 static devclass_t isp_devclass;
 DRIVER_MODULE(isp, pci, isp_pci_driver, isp_devclass, 0, 0);
+PCI_PNP_INFO(isp_devs);
 MODULE_DEPEND(isp, cam, 1, 1, 1);
 MODULE_DEPEND(isp, firmware, 1, 1, 1);
 static int isp_nvports = 0;
@@ -353,82 +406,15 @@ static int isp_nvports = 0;
 static int
 isp_pci_probe(device_t dev)
 {
-	switch ((pci_get_device(dev) << 16) | (pci_get_vendor(dev))) {
-	case PCI_QLOGIC_ISP1020:
-		device_set_desc(dev, "Qlogic ISP 1020/1040 PCI SCSI Adapter");
-		break;
-	case PCI_QLOGIC_ISP1080:
-		device_set_desc(dev, "Qlogic ISP 1080 PCI SCSI Adapter");
-		break;
-	case PCI_QLOGIC_ISP1240:
-		device_set_desc(dev, "Qlogic ISP 1240 PCI SCSI Adapter");
-		break;
-	case PCI_QLOGIC_ISP1280:
-		device_set_desc(dev, "Qlogic ISP 1280 PCI SCSI Adapter");
-		break;
-	case PCI_QLOGIC_ISP10160:
-		device_set_desc(dev, "Qlogic ISP 10160 PCI SCSI Adapter");
-		break;
-	case PCI_QLOGIC_ISP12160:
-		if (pci_get_subvendor(dev) == AMI_RAID_SUBVENDOR_ID) {
-			return (ENXIO);
-		}
-		device_set_desc(dev, "Qlogic ISP 12160 PCI SCSI Adapter");
-		break;
-	case PCI_QLOGIC_ISP2100:
-		device_set_desc(dev, "Qlogic ISP 2100 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP2200:
-		device_set_desc(dev, "Qlogic ISP 2200 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP2300:
-		device_set_desc(dev, "Qlogic ISP 2300 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP2312:
-		device_set_desc(dev, "Qlogic ISP 2312 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP2322:
-		device_set_desc(dev, "Qlogic ISP 2322 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP2422:
-		device_set_desc(dev, "Qlogic ISP 2422 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP2432:
-		device_set_desc(dev, "Qlogic ISP 2432 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP2532:
-		device_set_desc(dev, "Qlogic ISP 2532 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP5432:
-		device_set_desc(dev, "Qlogic ISP 5432 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP6312:
-		device_set_desc(dev, "Qlogic ISP 6312 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP6322:
-		device_set_desc(dev, "Qlogic ISP 6322 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP2031:
-		device_set_desc(dev, "Qlogic ISP 2031 PCI FC-AL Adapter");
-		break;
-	case PCI_QLOGIC_ISP8031:
-		device_set_desc(dev, "Qlogic ISP 8031 PCI FCoE Adapter");
-		break;
-	case PCI_QLOGIC_ISP2684:
-		device_set_desc(dev, "Qlogic ISP 2684 PCI FC Adapter");
-		break;
-	case PCI_QLOGIC_ISP2692:
-		device_set_desc(dev, "Qlogic ISP 2692 PCI FC Adapter");
-		break;
-	case PCI_QLOGIC_ISP2714:
-		device_set_desc(dev, "Qlogic ISP 2714 PCI FC Adapter");
-		break;
-	case PCI_QLOGIC_ISP2722:
-		device_set_desc(dev, "Qlogic ISP 2722 PCI FC Adapter");
-		break;
-	default:
+	const struct pci_device_table *ispd;
+
+	ispd = PCI_MATCH(dev, isp_devs);
+	if (ispd == NULL)
 		return (ENXIO);
-	}
+	else if (ispd->device == PCI_PRODUCT_QLOGIC_ISP12160 &&
+		pci_get_subvendor(dev) == AMI_RAID_SUBVENDOR_ID)
+		return (ENXIO);
+	device_set_desc(dev, ispd->descr);
 	if (isp_announced == 0 && bootverbose) {
 		printf("Qlogic ISP Driver, FreeBSD Version %d.%d, "
 		    "Core Version %d.%d\n",
